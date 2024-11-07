@@ -53,9 +53,12 @@ int main(int argc, char **argv) {
   
   std::cout << "Waiting for a client to connect...\n";
   
-  accept(server_fd, (struct sockaddr *) &client_addr, (socklen_t *) &client_addr_len);
-  std::cout << "Client connected\n";
+  int client_fd = accept(server_fd, (struct sockaddr *) &client_addr, (socklen_t *) &client_addr_len);
+  char buf[7] = {'+','P','O','N','G','\r','\n'};
+  send(client_fd, buf, sizeof(buf), 0);
   
+  std::cout << "Client connected\n";
+
   close(server_fd);
 
   return 0;
