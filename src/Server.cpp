@@ -8,6 +8,27 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
+void client_handler(int client_fd){
+  std::string buf = "+PONG\r\n";
+  char rec_buf[4096];
+  while (true){
+    memset(rec_buf, 0, 4096);
+    // wait for the client to send data
+    int bytesReceived = recv(client_fd, rec_buf, 4096, 0);
+    if (bytesReceived == -1){
+      std::cout << "Error in recv(). Quitting..." << std::endl;
+      break;
+    }
+    if (bytesReceived == 0){
+      std::cout << "Client disconnected..." << std::endl;
+      break;
+    }
+    // std::cout << "Received from Client: " << std::string(rec_buf, 0, bytesReceived) << std::endl;
+    // Send the pong message to client
+    send(client_fd, &buf[0], buf.size(), 0);
+  }
+}
+
 int main(int argc, char **argv) {
   // Flush after every std::cout / std::cerr
   std::cout << std::unitbuf;
@@ -60,11 +81,7 @@ int main(int argc, char **argv) {
   }
   std::cout << "Client connected\n";
 
-  std::string buf = "+PONG\r\n";
-  if (buf.size() != send(client_fd, &buf[0], buf.size(), 0)){
-    std::cerr << "Could not send response to client\n";
-    return 1;
-  }
+  client_handler(client_fd);
   
   close(server_fd);
 
