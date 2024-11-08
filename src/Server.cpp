@@ -7,7 +7,12 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <thread>
+#include <vector>
 
+/*
+Summary: Client Handler Function
+*/
 void client_handler(int client_fd){
   std::string buf = "+PONG\r\n";
   char rec_buf[4096];
@@ -69,19 +74,20 @@ int main(int argc, char **argv) {
     return 1;
   }
   
-  struct sockaddr_in client_addr;
-  int client_addr_len = sizeof(client_addr);
-  
-  std::cout << "Waiting for a client to connect...\n";
-  
-  int client_fd = accept(server_fd, (struct sockaddr *) &client_addr, (socklen_t *) &client_addr_len);
-  if (client_fd < 0){
-    std::cerr<<"Failed to accept client connection.\n";
-    return 1;
-  }
-  std::cout << "Client connected\n";
+  while (true){
+    struct sockaddr_in client_addr;
+    int client_addr_len = sizeof(client_addr);
+    std::cout << "Waiting for a client to connect...\n";
+    int client_fd = accept(server_fd, (struct sockaddr *) &client_addr, (socklen_t *) &client_addr_len);
+    if (client_fd < 0){
+      std::cerr<<"Failed to accept client connection.\n";
+      return 1;
+    }
+    std::cout << "Client connected\n";
 
-  client_handler(client_fd);
+    std::thread t(client_handler, client_fd);
+    t.detach();
+  }
   
   close(server_fd);
 
