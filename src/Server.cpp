@@ -54,11 +54,18 @@ int main(int argc, char **argv) {
   std::cout << "Waiting for a client to connect...\n";
   
   int client_fd = accept(server_fd, (struct sockaddr *) &client_addr, (socklen_t *) &client_addr_len);
-  std::string buf = "+PONG\r\n";
-  send(client_fd, &buf[0], buf.size(), 0);
-
+  if (client_fd < 0){
+    std::cerr<<"Failed to accept client connection.\n";
+    return 1;
+  }
   std::cout << "Client connected\n";
 
+  std::string buf = "+PONG\r\n";
+  if (buf.size() != send(client_fd, &buf[0], buf.size(), 0)){
+    std::cerr << "Could not send response to client\n";
+    return 1;
+  }
+  
   close(server_fd);
 
   return 0;
