@@ -28,13 +28,37 @@ std::string RedisParser::parseRESPCommand(const std::string& input) {
     else if (command == "PING"){
         return parsePINGCommand(input, pos);
     }
+    else if (command == "SET"){
+        return parseSETCommand(input, pos);
+    }
+    else if (command == "GET"){
+        return parseGETCommand(input, pos);
+    }
     else {
         return "-ERR unknown command '" + command + "'";
     }
 
     
 }
+// Parses a GET Command
+std::string RedisParser::parseGETCommand(const std::string& input, size_t& pos){
+    std::string argument = parseBulkString(input, pos);
+    if (database.find(argument) != database.end()){
+        std::string response = database[argument];
+        return "$" + std::to_string(response.size()) + "\r\n" + response + "\r\n";
+    }
+    else{
+        return "$-1\r\n";
+    }
+}
 
+//Parses a SET Command
+std::string RedisParser::parseSETCommand(const std::string& input, size_t& pos){
+    std::string argument1 = parseBulkString(input, pos);
+    std::string argument2 = parseBulkString(input, pos);
+    database[argument1] = argument2;
+    return "+OK\r\n";
+}
 
 // Parses an ECHO Command
 std::string RedisParser::parseECHOCommand(const std::string& input, size_t& pos){

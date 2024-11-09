@@ -32,6 +32,7 @@ void client_handler(int client_fd){
       break;
     }
     std::string recv_str(rec_buf, 0, bytesReceived);
+    // std::cout << "Received from client: " << recv_str;
     buf = parser.parseRESPCommand(recv_str);
     // Send the pong message to client
     send(client_fd, &buf[0], buf.size(), 0);

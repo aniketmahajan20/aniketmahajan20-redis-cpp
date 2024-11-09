@@ -3,6 +3,7 @@
 #define REDISPARSER_HPP
 
 #include <string>
+#include <unordered_map>
 
 class RedisParser {
 public:
@@ -10,6 +11,11 @@ public:
     std::string parseRESPCommand(const std::string& input);
 
 private:
+    std::unordered_map<std::string, std::string> database;
+    // Parses a GET Command
+    std::string parseGETCommand(const std::string& input, size_t& pos);
+    // Parses a SET command
+    std::string parseSETCommand(const std::string& input, size_t& pos);
     // Parses an echo command
     std::string parseECHOCommand(const std::string& input, size_t& pos);
     // Parses an PING command
