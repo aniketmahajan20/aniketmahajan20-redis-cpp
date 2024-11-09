@@ -9,17 +9,20 @@
 #include <netdb.h>
 #include <thread>
 #include <vector>
+#include "./redis_parser.hpp"
 
+#define BUFFER_SIZE 4096
 /*
 Summary: Client Handler Function
 */
 void client_handler(int client_fd){
-  std::string buf = "+PONG\r\n";
-  char rec_buf[4096];
+  RedisParser parser;
+  std::string buf;
+  char rec_buf[BUFFER_SIZE];
   while (true){
-    memset(rec_buf, 0, 4096);
+    memset(rec_buf, 0, BUFFER_SIZE);
     // wait for the client to send data
-    int bytesReceived = recv(client_fd, rec_buf, 4096, 0);
+    int bytesReceived = recv(client_fd, rec_buf, BUFFER_SIZE, 0);
     if (bytesReceived == -1){
       std::cout << "Error in recv(). Quitting..." << std::endl;
       break;
@@ -28,7 +31,8 @@ void client_handler(int client_fd){
       std::cout << "Client disconnected..." << std::endl;
       break;
     }
-    // std::cout << "Received from Client: " << std::string(rec_buf, 0, bytesReceived) << std::endl;
+    std::string recv_str(rec_buf, 0, bytesReceived);
+    buf = parser.parseRESPCommand(recv_str);
     // Send the pong message to client
     send(client_fd, &buf[0], buf.size(), 0);
   }
