@@ -9,35 +9,8 @@
 #include <netdb.h>
 #include <thread>
 #include <vector>
-#include "./redis_parser.hpp"
 
-#define BUFFER_SIZE 4096
-/*
-Summary: Client Handler Function
-*/
-void client_handler(int client_fd){
-  RedisParser parser;
-  std::string buf;
-  char rec_buf[BUFFER_SIZE];
-  while (true){
-    memset(rec_buf, 0, BUFFER_SIZE);
-    // wait for the client to send data
-    int bytesReceived = recv(client_fd, rec_buf, BUFFER_SIZE, 0);
-    if (bytesReceived == -1){
-      std::cout << "Error in recv(). Quitting..." << std::endl;
-      break;
-    }
-    if (bytesReceived == 0){
-      std::cout << "Client disconnected..." << std::endl;
-      break;
-    }
-    std::string recv_str(rec_buf, 0, bytesReceived);
-    // std::cout << "Received from client: " << recv_str;
-    buf = parser.parseRESPCommand(recv_str);
-    // Send the pong message to client
-    send(client_fd, &buf[0], buf.size(), 0);
-  }
-}
+#include "./client_handler.hpp"
 
 int main(int argc, char **argv) {
   // Flush after every std::cout / std::cerr
@@ -78,7 +51,7 @@ int main(int argc, char **argv) {
     std::cerr << "listen failed\n";
     return 1;
   }
-  
+  ClientHandler *handler = new ClientHandler();
   while (true){
     struct sockaddr_in client_addr;
     int client_addr_len = sizeof(client_addr);
@@ -90,7 +63,7 @@ int main(int argc, char **argv) {
     }
     std::cout << "Client connected\n";
 
-    std::thread t(client_handler, client_fd);
+    std::thread t = handler->client_handler_thread(client_fd);
     t.detach();
   }
   
