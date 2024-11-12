@@ -4,7 +4,8 @@
 #include <chrono>
 #include <unistd.h>
 
-#include "redis_parser.hpp"
+#include "./redis_parser.hpp"
+#include "./globals.h"
 
 
 std::string RedisParser::parseRESPCommand(const std::string& input, std::mutex& database_mutex) {
@@ -39,12 +40,30 @@ std::string RedisParser::parseRESPCommand(const std::string& input, std::mutex& 
     else if (command == "GET"){
         return parseGETCommand(input, pos);
     }
+    else if (command == "CONFIG"){
+        return parseCONFIGGETCommand(input, pos, num_elements);
+    }
     else {
         return "-ERR unknown command '" + command + "'";
     }
 
     
 }
+
+// Parses a CONFIG GET Command
+std::string RedisParser::parseCONFIGGETCommand(const std::string& input, size_t& pos, int num_elements){
+    std::string command = parseBulkString(input, pos);
+    if (command == "GET"){
+        std::string config_variable = parseBulkString(input, pos);
+        if (config_variable == "dir"){
+            return create_array_reponse({command, config::dir});
+        }
+        else if (config_variable == "dbfile"){
+            return create_array_reponse({command, config::dbfilename});
+        }
+    }
+}
+
 // Parses a GET Command
 std::string RedisParser::parseGETCommand(const std::string& input, size_t& pos){
     std::string argument = parseBulkString(input, pos);
@@ -52,7 +71,7 @@ std::string RedisParser::parseGETCommand(const std::string& input, size_t& pos){
         DBValue response_struct = database[argument];
         if (response_struct.expiry_time == 0 || get_current_time_milli() < response_struct.expiry_time){
             std::string response = response_struct.value;
-            return "$" + std::to_string(response.size()) + "\r\n" + response + "\r\n";
+            return create_string_reponse(response);
         }
         else{
             database.erase(argument);
@@ -91,7 +110,7 @@ std::string RedisParser::parseECHOCommand(const std::string& input, size_t& pos)
     std::string argument = parseBulkString(input, pos);
 
     // Formulate the RESP response for the ECHO command (bulk string format)
-    return "$" + std::to_string(argument.size()) + "\r\n" + argument + "\r\n";
+    return create_string_reponse(argument);
 }
 
 
@@ -120,6 +139,27 @@ std::string RedisParser::parseBulkString(const std::string& input, size_t& pos) 
     return bulk_string;
 }
 
+
+
+// Helper Functions
+
+
+// Create array response for the client
+std::string RedisParser::create_array_reponse(const std::vector<std::string>& response_arr){
+    std::string response = "";
+    for (int i = 0; i < response_arr.size(); i++){
+        response += create_string_reponse(response_arr[i]);
+    }
+    return "*" + std::to_string(response_arr.size()) + "\r\n" + response;
+}
+
+// Create the response for the client
+std::string RedisParser::create_string_reponse(const std::string& response){
+    return "$" + std::to_string(response.size()) + "\r\n" + response + "\r\n"; 
+}
+
+
+// Get the current time in milliseconds
 inline long long RedisParser::get_current_time_milli(){
     auto now = std::chrono::system_clock::now();
     auto duration = now.time_since_epoch();

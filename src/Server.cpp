@@ -1,4 +1,5 @@
 #include <iostream>
+#include <algorithm>
 #include <cstdlib>
 #include <string>
 #include <cstring>
@@ -11,8 +12,11 @@
 #include <vector>
 
 #include "./client_handler.hpp"
+#include "./globals.h"
 
-int main(int argc, char **argv) {
+
+int main(int argc, char *argv[]) {
+  config::parseCommandLineArgs(argc, argv);
   // Flush after every std::cout / std::cerr
   std::cout << std::unitbuf;
   std::cerr << std::unitbuf;
