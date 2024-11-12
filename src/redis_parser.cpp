@@ -56,10 +56,10 @@ std::string RedisParser::parseCONFIGGETCommand(const std::string& input, size_t&
     if (command == "GET"){
         std::string config_variable = parseBulkString(input, pos);
         if (config_variable == "dir"){
-            return create_array_reponse({command, config::dir});
+            return create_array_reponse({config_variable, config::dir});
         }
         else if (config_variable == "dbfile"){
-            return create_array_reponse({command, config::dbfilename});
+            return create_array_reponse({config_variable, config::dbfilename});
         }
     }
 }
