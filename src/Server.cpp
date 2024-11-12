@@ -1,5 +1,4 @@
 #include <iostream>
-#include <algorithm>
 #include <cstdlib>
 #include <string>
 #include <cstring>
@@ -9,7 +8,6 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <thread>
-#include <vector>
 
 #include "./client_handler.hpp"
 #include "./globals.h"
