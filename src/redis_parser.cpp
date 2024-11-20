@@ -1,14 +1,14 @@
 #include <sstream>
 #include <stdexcept>
 #include <iostream>
-#include <chrono>
 #include <unistd.h>
+#include <regex>
 
 #include "./redis_parser.hpp"
 #include "./globals.h"
 
 
-std::string RedisParser::parseRESPCommand(const std::string& input, std::mutex& database_mutex) {
+std::string RedisParser::parseRESPCommand(const std::string& input) {
     size_t pos = 0;
 
     // Parse array indicator, e.g., "*2\r\n"
@@ -35,7 +35,7 @@ std::string RedisParser::parseRESPCommand(const std::string& input, std::mutex& 
         return parsePINGCommand(input, pos);
     }
     else if (command == "SET"){
-        return parseSETCommand(input, pos, num_elements, database_mutex);
+        return parseSETCommand(input, pos, num_elements);
     }
     else if (command == "GET"){
         return parseGETCommand(input, pos);
@@ -43,12 +43,43 @@ std::string RedisParser::parseRESPCommand(const std::string& input, std::mutex& 
     else if (command == "CONFIG"){
         return parseCONFIGGETCommand(input, pos, num_elements);
     }
+    else if (command == "KEYS"){
+        return parseKEYSCommand(input, pos);
+    }
     else {
         return "-ERR unknown command '" + command + "'";
     }
 
     
 }
+
+// Parses a KEYS Command
+std::string RedisParser::parseKEYSCommand(const std::string& input, size_t& pos){
+    std::string to_match = parseBulkString(input, pos);
+    std::string key_to_match = "";
+    std::string star = "";
+    std::regex pattern("(.*)");
+    int len = to_match.size();
+    if (to_match[len-1] == '*'){
+        key_to_match = to_match.substr(0,len-1);
+        std::cout << "key to match: " << key_to_match << std::endl;
+        std::regex pattern("(.*)");
+    }
+    else {
+        std::regex pattern(to_match);
+    }
+    std::vector<std::string> response_array;
+    for (auto pair: db_handler.database){
+        std::string key = pair.first;
+        std::cout << "key in database: " << key << std::endl;
+        if (std::regex_match(key, pattern)){
+            response_array.push_back(key);
+        }
+    }
+    return create_array_reponse(response_array);
+}
+
+
 
 // Parses a CONFIG GET Command
 std::string RedisParser::parseCONFIGGETCommand(const std::string& input, size_t& pos, int num_elements){
@@ -62,30 +93,25 @@ std::string RedisParser::parseCONFIGGETCommand(const std::string& input, size_t&
             return create_array_reponse({config_variable, config::dbfilename});
         }
     }
+    else{
+        std::cerr << "Error: Config Followed by unknown Command" << command << std::endl;
+    }
+    return "";
 }
 
 // Parses a GET Command
 std::string RedisParser::parseGETCommand(const std::string& input, size_t& pos){
     std::string argument = parseBulkString(input, pos);
-    if (database.find(argument) != database.end()){
-        DBValue response_struct = database[argument];
-        if (response_struct.expiry_time == 0 || get_current_time_milli() < response_struct.expiry_time){
-            std::string response = response_struct.value;
-            return create_string_reponse(response);
-        }
-        else{
-            database.erase(argument);
-            return "$-1\r\n";
-        }
+    std::string response = db_handler.get(argument);
+    if (response != NULL_RESPONSE){
+        return create_string_reponse(response);
     }
-    else{
-        return "$-1\r\n";
-    }
+    return response;
 }
 
 //Parses a SET Command
 std::string RedisParser::parseSETCommand(const std::string& input, size_t& pos, 
-                                        int num_elements, std::mutex& database_mutex){
+                                        int num_elements){
     std::string argument1 = parseBulkString(input, pos);
     std::string argument2 = parseBulkString(input, pos);
     long expiry_time = 0;
@@ -98,9 +124,7 @@ std::string RedisParser::parseSETCommand(const std::string& input, size_t& pos,
         auto current_time = get_current_time_milli();
         expiry_time = current_time + std::stoi(expiry_value);
     }
-    database_mutex.lock();
-    database[argument1] = DBValue(argument2, expiry_time);
-    database_mutex.unlock();
+    db_handler.set(argument1, argument2, expiry_time);
     return "+OK\r\n";
 }
 

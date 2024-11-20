@@ -7,9 +7,10 @@
 Summary: Client Handler Function
 */
 class ClientHandler {
-private:
-  std::mutex database_mutex;
 public: 
+  ClientHandler(DatabaseHandler& db_handler) : db_handler(db_handler) {}
   void client_handler(int client_fd);
   std::thread client_handler_thread(int client_fd);
+private:
+  DatabaseHandler& db_handler;
 };

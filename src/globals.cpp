@@ -13,11 +13,8 @@ namespace config{
         if (arg == "--dir" && i+1 < argc){
             dir = argv[++i];
         }
-        else if (arg == "--dbfilename" && i+1 < argc){
+        if (arg == "--dbfilename" && i+1 < argc){
             dbfilename = argv[++i];
-        }
-        else{
-            std::cerr << "Unknown argument: " << arg << std::endl;
         }
     }
     }

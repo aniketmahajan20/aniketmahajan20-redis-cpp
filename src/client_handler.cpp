@@ -1,9 +1,8 @@
-#include <mutex>
 #include <iostream>
 #include <cstring>
+#include <string>
 #include <sys/socket.h>
 
-#include "./redis_parser.hpp"
 #include "./client_handler.hpp"
 
 #define BUFFER_SIZE 4096
@@ -11,7 +10,7 @@
 Summary: Client Handler Function
 */
 void ClientHandler::client_handler(int client_fd){
-    RedisParser parser;
+    RedisParser parser(db_handler);
     std::string buf;
     char rec_buf[BUFFER_SIZE];
     while (true){
@@ -28,7 +27,7 @@ void ClientHandler::client_handler(int client_fd){
         }
         std::string recv_str(rec_buf, 0, bytesReceived);
         // std::cout << "Received from client: " << recv_str;
-        buf = parser.parseRESPCommand(recv_str, database_mutex);
+        buf = parser.parseRESPCommand(recv_str);
         // Send the pong message to client
         send(client_fd, &buf[0], buf.size(), 0);
     }

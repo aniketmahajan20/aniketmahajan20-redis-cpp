@@ -11,10 +11,15 @@
 
 #include "./client_handler.hpp"
 #include "./globals.h"
+#include "./read_file.hpp"
+#include "./database_handler.hpp"
 
 
 int main(int argc, char *argv[]) {
+  DatabaseHandler db_handler;
   config::parseCommandLineArgs(argc, argv);
+  RedisRDBParser rdb_parser = RedisRDBParser(config::dir + "/" + config::dbfilename, db_handler);
+  rdb_parser.parse();
   // Flush after every std::cout / std::cerr
   std::cout << std::unitbuf;
   std::cerr << std::unitbuf;
@@ -53,7 +58,7 @@ int main(int argc, char *argv[]) {
     std::cerr << "listen failed\n";
     return 1;
   }
-  ClientHandler *handler = new ClientHandler();
+  ClientHandler *handler = new ClientHandler(db_handler);
   while (true){
     struct sockaddr_in client_addr;
     int client_addr_len = sizeof(client_addr);

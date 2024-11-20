@@ -6,30 +6,30 @@
 #include <unordered_map>
 #include <mutex>
 #include <vector>
+#include <chrono>
 
+#include "./database_handler.hpp"
 
-struct DBValue {
-    std::string value;
-    long expiry_time;
-    DBValue() : value(""), expiry_time(0) {}
-    DBValue(std::string val) : value(val), expiry_time(0) {}
-    DBValue(std::string val, long time) : value(val), expiry_time(time) {}
-};
 
 class RedisParser {
 public:
+    RedisParser(DatabaseHandler& db_handler) : db_handler(db_handler) {}
     // Parses a Redis command and returns the response
-    std::string parseRESPCommand(const std::string& input, std::mutex& database_mutex);
+    std::string parseRESPCommand(const std::string& input);
+    // Set Key-Value pair in the Database and Expiry Time if given
+    void set(std::string key, std::string value, long expiry_time);
 
 private:
-    std::unordered_map<std::string, DBValue> database;
+    DatabaseHandler& db_handler;
+    // Parses a KEYS Command
+    std::string parseKEYSCommand(const std::string& input, size_t& pos);
     // Parses a CONFIG GET Command
     std::string parseCONFIGGETCommand(const std::string& input, size_t& pos, int num_elements);
     // Parses a GET Command
     std::string parseGETCommand(const std::string& input, size_t& pos);
     // Parses a SET command
     std::string parseSETCommand(const std::string& input, size_t& pos, 
-                                int num_elements, std::mutex& database_mutex);
+                                int num_elements);
     // Parses an echo command
     std::string parseECHOCommand(const std::string& input, size_t& pos);
     // Parses an PING command
