@@ -57,13 +57,11 @@ std::string RedisParser::parseRESPCommand(const std::string& input) {
 std::string RedisParser::parseKEYSCommand(const std::string& input, size_t& pos){
     std::string to_match = parseBulkString(input, pos);
     std::string key_to_match = "";
-    std::string star = "";
-    std::regex pattern("(.*)");
+    std::regex pattern;
     int len = to_match.size();
     if (to_match[len-1] == '*'){
         key_to_match = to_match.substr(0,len-1);
-        std::cout << "key to match: " << key_to_match << std::endl;
-        std::regex pattern("(.*)");
+        pattern = std::regex("(" + key_to_match + ")(.*)");
     }
     else {
         std::regex pattern(to_match);
@@ -71,7 +69,6 @@ std::string RedisParser::parseKEYSCommand(const std::string& input, size_t& pos)
     std::vector<std::string> response_array;
     for (auto pair: db_handler.database){
         std::string key = pair.first;
-        std::cout << "key in database: " << key << std::endl;
         if (std::regex_match(key, pattern)){
             response_array.push_back(key);
         }
