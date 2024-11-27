@@ -2,8 +2,9 @@
 #include <iostream>
 
 namespace config{
-    std::string dir = "";
-    std::string dbfilename = "";
+    std::string dir;
+    std::string dbfilename;
+    int port = DEFUALT_PORT;
 
 
 
@@ -15,6 +16,9 @@ namespace config{
         }
         if (arg == "--dbfilename" && i+1 < argc){
             dbfilename = argv[++i];
+        }
+        if (arg == "--port" && i+1 < argc){
+            port = std::stoi(argv[++i]);
         }
     }
     }
