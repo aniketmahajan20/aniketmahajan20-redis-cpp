@@ -16,8 +16,8 @@
 
 
 int main(int argc, char *argv[]) {
-  config::parseCommandLineArgs(argc, argv);
   ServerInfo server_info;
+  config::parseCommandLineArgs(argc, argv, server_info);
   DatabaseHandler db_handler(server_info);
   RedisRDBParser rdb_parser = RedisRDBParser(config::dir + "/" + config::dbfilename, db_handler);
   rdb_parser.parse();

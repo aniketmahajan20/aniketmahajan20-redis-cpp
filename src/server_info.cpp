@@ -29,9 +29,9 @@ int ServerInfo::get_repl_backlog_histlen(){
     return repl_backlog_histlen;
 }
 void ServerInfo::updateInfo(std::string role){
-    role = role;
+    this->role.assign(role);
 }
 void ServerInfo::updateInfo(std::string role, int connected_slaves){
-    role = role;
-    connected_slaves = connected_slaves;
+    this->role.assign(role);
+    this->connected_slaves = connected_slaves;
 }
