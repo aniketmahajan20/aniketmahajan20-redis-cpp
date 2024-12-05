@@ -16,8 +16,9 @@
 
 
 int main(int argc, char *argv[]) {
-  DatabaseHandler db_handler;
   config::parseCommandLineArgs(argc, argv);
+  ServerInfo server_info;
+  DatabaseHandler db_handler(server_info);
   RedisRDBParser rdb_parser = RedisRDBParser(config::dir + "/" + config::dbfilename, db_handler);
   rdb_parser.parse();
   // Flush after every std::cout / std::cerr
@@ -49,7 +50,7 @@ int main(int argc, char *argv[]) {
   server_addr.sin_port = htons(config::port);
   
   if (bind(server_fd, (struct sockaddr *) &server_addr, sizeof(server_addr)) != 0) {
-    std::cerr << "Failed to bind to port 6379\n";
+    std::cerr << "Failed to bind to port: \n" << config::port;
     return 1;
   }
   
@@ -73,7 +74,7 @@ int main(int argc, char *argv[]) {
     std::thread t = handler->client_handler_thread(client_fd);
     t.detach();
   }
-  
+  delete handler;
   close(server_fd);
 
   return 0;

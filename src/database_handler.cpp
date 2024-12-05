@@ -2,6 +2,9 @@
 #include "./utils.hpp"
 #include "./globals.h"
 
+ServerInfo DatabaseHandler::get_server_info(){
+    return server_info;
+}
 
 void DatabaseHandler::set(std::string key, std::string value, 
                             long expiry_time){

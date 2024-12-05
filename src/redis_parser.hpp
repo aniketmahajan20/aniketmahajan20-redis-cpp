@@ -16,11 +16,11 @@ public:
     RedisParser(DatabaseHandler& db_handler) : db_handler(db_handler) {}
     // Parses a Redis command and returns the response
     std::string parseRESPCommand(const std::string& input);
-    // Set Key-Value pair in the Database and Expiry Time if given
-    void set(std::string key, std::string value, long expiry_time);
 
 private:
     DatabaseHandler& db_handler;
+    // Parses an INFO Command
+    std::string parseINFOCommand(const std::string& input, size_t& pos);
     // Parses a KEYS Command
     std::string parseKEYSCommand(const std::string& input, size_t& pos);
     // Parses a CONFIG GET Command

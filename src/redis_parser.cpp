@@ -46,11 +46,34 @@ std::string RedisParser::parseRESPCommand(const std::string& input) {
     else if (command == "KEYS"){
         return parseKEYSCommand(input, pos);
     }
+    else if (command == "INFO"){
+        return parseINFOCommand(input, pos);
+    }
     else {
         return "-ERR unknown command '" + command + "'";
     }
 
     
+}
+
+
+// Parses an INFO Command
+std::string RedisParser::parseINFOCommand(const std::string& input, size_t& pos){
+    std::string command = parseBulkString(input, pos);
+    for (auto& c : command) c = std::toupper(c);
+    std::string response = "role:";
+    if (command == "REPLICATION"){
+        ServerInfo server_info = db_handler.get_server_info();
+        response = response + server_info.get_role();
+        // response_array.push_back("connected_slaves:" + std::to_string(server_info.get_connected_slaves()));
+        // response_array.push_back("master_replid:" + server_info.get_master_replid());
+        // response_array.push_back("second_repl_offset:" + std::to_string(server_info.get_second_repl_offset()));
+        // response_array.push_back("repl_backlog_active:" + std::to_string(server_info.get_repl_backlog_active()));
+        // response_array.push_back("repl_backlog_size:" + std::to_string(server_info.get_repl_backlog_size()));
+        // response_array.push_back("repl_backlog_first_byte_offset:" + std::to_string(server_info.get_repl_backlog_first_byte_offset()));
+        // response_array.push_back("repl_backlog_histlen:" + std::to_string(server_info.get_repl_backlog_histlen()));
+    }
+    return create_string_reponse(response);
 }
 
 // Parses a KEYS Command
@@ -81,6 +104,7 @@ std::string RedisParser::parseKEYSCommand(const std::string& input, size_t& pos)
 // Parses a CONFIG GET Command
 std::string RedisParser::parseCONFIGGETCommand(const std::string& input, size_t& pos, int num_elements){
     std::string command = parseBulkString(input, pos);
+    for (auto& c : command) c = std::toupper(c);
     if (command == "GET"){
         std::string config_variable = parseBulkString(input, pos);
         if (config_variable == "dir"){

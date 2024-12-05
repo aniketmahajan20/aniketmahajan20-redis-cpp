@@ -5,6 +5,8 @@
 #include <unordered_map>
 #include <mutex>
 
+#include "./server_info.hpp"
+
 struct DBValue {
     std::string value;
     long expiry_time;
@@ -15,9 +17,10 @@ struct DBValue {
 
 class DatabaseHandler {
 private:
-    
+    ServerInfo& server_info;
     std::mutex database_mutex;
 public:
+    DatabaseHandler(ServerInfo& server_info): server_info(server_info) {}
     std::unordered_map<std::string, DBValue> database;
     
     // Set Key-Value pair in the Database and Expiry time if given
@@ -28,6 +31,9 @@ public:
     // populating the database
     void set_without_lock(std::string key, std::string value,long expiry_time);
 
+    //Function to access the ServerInfo
+    ServerInfo get_server_info();
+    
     // Function to get the value based on the key
     std::string get(std::string key);
 };
