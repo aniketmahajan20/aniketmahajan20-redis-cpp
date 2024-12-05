@@ -1,3 +1,6 @@
+#ifndef CLIENTHANDLER_HPP
+#define CLIENTHANDLER_HPP
+
 #include <mutex>
 #include <thread>
 #include "./redis_parser.hpp"
@@ -14,3 +17,5 @@ public:
 private:
   DatabaseHandler& db_handler;
 };
+
+#endif //CLIENTHANDLER_HPP

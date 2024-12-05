@@ -1,3 +1,7 @@
+#ifndef READFILE_HPP
+#define READFILE_HPP
+
+
 #include <iostream>
 #include <cstdint>
 #include <fstream>
@@ -28,3 +32,5 @@ public:
                 DatabaseHandler& db_handler) : filename(filename), db_handler(db_handler) {}
     bool parse();
 };
+
+#endif //READFILE_HPP
