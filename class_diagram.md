@@ -8,6 +8,8 @@ classDiagram
     ClientHandler <|-- DatabaseHandler
     RedisParser <|-- DatabaseHandler
     DatabaseHandler <|-- ServerInfo
+    config <|-- ServerInfo
+    RedisParser <|-- config
     class RedisRDBParser{
         -DatabaseHandler db_handler
         -string filename
@@ -75,6 +77,9 @@ classDiagram
         -int repl_backlog_size
         -int repl_backlog_first_byte_offset
         -int repl_backlog_histlen
+    }
+    class config{
+        +parseCommandLineArgs(int argc, char* argv[], ServerInfo& server_info);
     }
 
 ```
