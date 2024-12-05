@@ -61,17 +61,18 @@ std::string RedisParser::parseRESPCommand(const std::string& input) {
 std::string RedisParser::parseINFOCommand(const std::string& input, size_t& pos){
     std::string command = parseBulkString(input, pos);
     for (auto& c : command) c = std::toupper(c);
-    std::string response = "role:";
+    std::string response = "";
     if (command == "REPLICATION"){
         ServerInfo server_info = db_handler.get_server_info();
-        response = response + server_info.get_role();
-        // response_array.push_back("connected_slaves:" + std::to_string(server_info.get_connected_slaves()));
-        // response_array.push_back("master_replid:" + server_info.get_master_replid());
-        // response_array.push_back("second_repl_offset:" + std::to_string(server_info.get_second_repl_offset()));
-        // response_array.push_back("repl_backlog_active:" + std::to_string(server_info.get_repl_backlog_active()));
-        // response_array.push_back("repl_backlog_size:" + std::to_string(server_info.get_repl_backlog_size()));
-        // response_array.push_back("repl_backlog_first_byte_offset:" + std::to_string(server_info.get_repl_backlog_first_byte_offset()));
-        // response_array.push_back("repl_backlog_histlen:" + std::to_string(server_info.get_repl_backlog_histlen()));
+        response = response + "role:" + server_info.get_role() + "\r";
+        response = response + "connected_slaves:" + std::to_string(server_info.get_connected_slaves()) + "\r";
+        response = response + "master_replid:" + server_info.get_master_replid() + "\r";
+        response = response + "master_repl_offset:" + std::to_string(server_info.get_master_repl_offset()) + "\r";
+        response = response + "second_repl_offset:" + std::to_string(server_info.get_second_repl_offset()) + "\r";
+        response = response + "repl_backlog_active:" + std::to_string(server_info.get_repl_backlog_active()) + "\r";
+        response = response + "repl_backlog_size:" + std::to_string(server_info.get_repl_backlog_size()) + "\r";
+        response = response + "repl_backlog_first_byte_offset:" + std::to_string(server_info.get_repl_backlog_first_byte_offset()) + "\r";
+        response = response + "repl_backlog_histlen:" + std::to_string(server_info.get_repl_backlog_histlen()) + "\r";
     }
     return create_string_reponse(response);
 }

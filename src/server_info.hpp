@@ -9,7 +9,8 @@ public:
     ServerInfo() {
         role = "master";
         connected_slaves = -1;
-        master_replid = "";
+        master_replid = this->generate_master_replid();
+        master_repl_offset = 0;
         second_repl_offset = -1;
         repl_backlog_active = -1;
         repl_backlog_size = -1;
@@ -37,6 +38,7 @@ private:
     int repl_backlog_size;
     int repl_backlog_first_byte_offset;
     int repl_backlog_histlen;
+    std::string generate_master_replid();
 };
 
 #endif //SERVERINFO_HPP

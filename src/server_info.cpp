@@ -1,4 +1,7 @@
+#include <random>
 #include "./server_info.hpp"
+
+#define REPLID_LEN 40
 
 std::string ServerInfo::get_role(){
     return role;
@@ -34,4 +37,19 @@ void ServerInfo::updateInfo(std::string role){
 void ServerInfo::updateInfo(std::string role, int connected_slaves){
     this->role.assign(role);
     this->connected_slaves = connected_slaves;
+}
+
+
+//Helper Functions
+std::string ServerInfo::generate_master_replid(){
+    const std::string CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    std::random_device rd;
+    std::mt19937 generator(rd());
+    std::uniform_int_distribution<> distribution(0, CHARACTERS.size() - 1);
+    
+    std::string random_string;
+    for (int i = 0; i < REPLID_LEN; i++){
+        random_string += CHARACTERS[distribution(generator)];
+    }
+    return random_string;
 }
