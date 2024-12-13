@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
   //
   int server_fd = socket(AF_INET, SOCK_STREAM, 0);
   if (server_fd < 0) {
-   std::cerr << "Failed to create server socket\n";
+   std::cerr << "Error: Failed to create server socket.\n";
    return 1;
   }
   
@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
     std::cout << "Waiting for a client to connect...\n";
     int client_fd = accept(server_fd, (struct sockaddr *) &client_addr, (socklen_t *) &client_addr_len);
     if (client_fd < 0){
-      std::cerr<<"Failed to accept client connection.\n";
+      std::cerr<<"Error: Failed to accept client connection.\n";
       return 1;
     }
     std::cout << "Client connected\n";

@@ -18,7 +18,9 @@ namespace config{
                 port = std::stoi(argv[++i]);
             }
             if (arg == "--replicaof" && i+1 < argc){
-                server_info.updateInfo("slave");
+                server_info.update_info("slave");
+                server_info.get_master_ip_port(argv[++i]);
+                server_info.send_handshake();
             }
         }
     }
