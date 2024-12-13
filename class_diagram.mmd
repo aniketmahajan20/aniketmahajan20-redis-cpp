@@ -1,7 +1,5 @@
-
-```mermaid
 ---
-title: Redis
+title: Redis Class Diagram
 ---
 classDiagram
     RedisRDBParser <|-- DatabaseHandler
@@ -66,10 +64,15 @@ classDiagram
         +get_repl_backlog_size() int
         +get_repl_backlog_first_byte_offset() int
         +get_repl_backlog_histlen() int
-        +updateInfo(string role)
-        +updateInfo(string role, int connected_slaves)
+        +update_info(string role)
+        +update_info(string role, int connected_slaves)
+        +send_handshake()
+        +get_master_ip_port(string args)
+
         -string role
         -int connected_slaves
+        -string master_ip
+        -int master_port
         -string master_replid
         -int master_repl_offset
         -int second_repl_offset
@@ -81,5 +84,3 @@ classDiagram
     class config{
         +parseCommandLineArgs(int argc, char* argv[], ServerInfo& server_info);
     }
-
-```
