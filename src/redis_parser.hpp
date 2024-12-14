@@ -10,6 +10,8 @@
 
 #include "./database_handler.hpp"
 
+#define PING_RESPONSE "+PONG\r\n"
+#define OK_RESPONSE   "+OK\r\n"
 
 class RedisParser {
 public:
