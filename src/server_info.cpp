@@ -4,6 +4,10 @@
 #include <iostream>
 #include <arpa/inet.h>
 #include <regex>
+#include <cstring>
+
+#include "./globals.h"
+#include "utils.hpp"
 
 #define REPLID_LEN 40
 #define LOCALHOST "127.0.0.1"
@@ -81,9 +85,22 @@ void ServerInfo::send_handshake(){
         inet_pton(AF_INET, master_ip.c_str(), &master_addr.sin_addr);
         if (connect(master_fd, (struct sockaddr *) &master_addr, sizeof(master_addr)) != 0) 
             std::cerr << "FAiled to connect to master \n";
-        
-        std::string handshake = "*1\r\n$4\r\nPING\r\n";
-        send(master_fd, handshake.c_str(), handshake.size(), 0);
+        std::string handshake_message = "*1\r\n$4\r\nPING\r\n";
+        send(master_fd, handshake_message.c_str(), handshake_message.size(), 0);
+        if(get_recv_str(master_fd) != "+PONG"){
+            std::cerr << "Error: Incorrect/No reply for PING from master to replica.";
+        }
+        handshake_message = "*3\r\n$8\r\nREPLCONF\r\n$14\r\nlistening-port\r\n$4\r\n" + 
+                                        std::to_string(config::port) + "\r\n";
+        send(master_fd, handshake_message.c_str(), handshake_message.size(), 0);
+        if(get_recv_str(master_fd) != "+OK"){
+            std::cerr << "Error: Incorrect/No reply for REPLCONF from master to replica.";
+        }
+        handshake_message = "*3\r\n$8\r\nREPLCONF\r\n$4\r\ncapa\r\n$6\r\npsync2\r\n";
+        send(master_fd, handshake_message.c_str(), handshake_message.size(), 0);
+        if(get_recv_str(master_fd) != "+OK"){
+            std::cerr << "Error: Incorrect/No reply for REPLCONF from master to replica.";
+        }
     }
 }
 

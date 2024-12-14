@@ -6,8 +6,10 @@ classDiagram
     ClientHandler <|-- DatabaseHandler
     RedisParser <|-- DatabaseHandler
     DatabaseHandler <|-- ServerInfo
-    config <|-- ServerInfo
     RedisParser <|-- config
+    utils <|-- config
+    ServerInfo <|-- config
+    utils <|-- ServerInfo 
     class RedisRDBParser{
         -DatabaseHandler db_handler
         -string filename
@@ -82,5 +84,14 @@ classDiagram
         -int repl_backlog_histlen
     }
     class config{
+        +string dir
+        +string dbfilename
+        +string port
+    }
+    class utils{
+        +reverseEndianness(uint64_t value) uint64_t
+        +print_file_hex(ifstream file)
+        +get_current_time_milli() long
+        +get_recv_str(int file_descriptor) string
         +parseCommandLineArgs(int argc, char* argv[], ServerInfo& server_info);
     }

@@ -1,3 +1,5 @@
+#include <arpa/inet.h>
+
 #include "./utils.hpp"
 #include "./globals.h"
 
@@ -27,6 +29,15 @@ long long get_current_time_milli(){
     auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
     return milliseconds;
 }
+
+// Get the received String 
+std::string get_recv_str(int file_descriptor){
+    char rec_buf[RECV_BUFFER_SIZE];
+    int bytesReceived = recv(file_descriptor, rec_buf, RECV_BUFFER_SIZE, 0);
+    std::string recv_str(rec_buf, 0, bytesReceived);
+    return recv_str;
+}
+
 void parseCommandLineArgs(int argc, char* argv[], ServerInfo& server_info){
     for (int i = 0; i < argc; i++){
         std::string arg = argv[i];
