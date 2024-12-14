@@ -21,6 +21,8 @@ public:
 
 private:
     DatabaseHandler& db_handler;
+    // Parses a PSYNC Command
+    std::string parsePSYNCCommand(const std::string& input, size_t& pos);
     // Parses a REPLCONF Command
     std::string parseREPLCONFCommand(const std::string& input, size_t& pos);
     // Parses an INFO Command

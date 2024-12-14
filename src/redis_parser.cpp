@@ -54,17 +54,26 @@ std::string RedisParser::parseRESPCommand(const std::string& input) {
     else if (command == "REPLCONF"){
         return parseREPLCONFCommand(input, pos);
     }
+    else if (command == "PSYNC"){
+        return parsePSYNCCommand(input, pos);
+    }
     else {
         return "-ERR unknown command '" + command + "'";
-    }
-
-    
+    }    
 }
+
+// Parses a PSYNC Command
+std::string RedisParser::parsePSYNCCommand(const std::string& input, size_t& pos){
+    ServerInfo server_info = db_handler.get_server_info();
+    // Hardcoding the response as suggested by the requirements
+    std::string response = "+FULLRESYNC " + server_info.get_master_replid() + " 0\r\n";
+    return response;
+}
+
 
 // Parses a REPLCONF Command
 std::string RedisParser::parseREPLCONFCommand(const std::string& input, size_t& pos){
-    std::string response = "OK";
-    return create_string_reponse(response);
+    return OK_RESPONSE;
 }
 
 // Parses an INFO Command
