@@ -42,8 +42,6 @@ private:
     std::string create_string_reponse(const std::string& response);
     // Create array response for the client
     std::string create_array_reponse(const std::vector<std::string>& response_arr);
-    // Get the current time in milliseconds
-    inline long long get_current_time_milli();
 };
 
 #endif // REDISPARSER_HPP

@@ -6,9 +6,11 @@
 
 #include "./redis_parser.hpp"
 #include "./globals.h"
+#include "./utils.hpp"
 
 
 std::string RedisParser::parseRESPCommand(const std::string& input) {
+    // std::cout << "Received Bytes: " << input << std::endl;
     size_t pos = 0;
 
     // Parse array indicator, e.g., "*2\r\n"
@@ -204,11 +206,3 @@ std::string RedisParser::create_string_reponse(const std::string& response){
     return "$" + std::to_string(response.size()) + "\r\n" + response + "\r\n"; 
 }
 
-
-// Get the current time in milliseconds
-inline long long RedisParser::get_current_time_milli(){
-    auto now = std::chrono::system_clock::now();
-    auto duration = now.time_since_epoch();
-    auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
-    return milliseconds;
-}
