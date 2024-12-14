@@ -4,21 +4,20 @@
 #include <sys/socket.h>
 
 #include "./client_handler.hpp"
-
-#define BUFFER_SIZE 4096
+#include "./globals.h"
 /*
 Summary: Client Handler Function
 */
 void ClientHandler::client_handler(int client_fd){
     RedisParser parser(db_handler);
     std::string buf;
-    char rec_buf[BUFFER_SIZE];
+    char rec_buf[RECV_BUFFER_SIZE];
     while (true){
-        memset(rec_buf, 0, BUFFER_SIZE);
+        memset(rec_buf, 0, RECV_BUFFER_SIZE);
         // wait for the client to send data
-        int bytesReceived = recv(client_fd, rec_buf, BUFFER_SIZE, 0);
+        int bytesReceived = recv(client_fd, rec_buf, RECV_BUFFER_SIZE, 0);
         if (bytesReceived == -1){
-            std::cout << "Error in recv(). Quitting..." << std::endl;
+            std::cerr << "Error in recv(). Quitting..." << std::endl;
             break;
         }
         if (bytesReceived == 0){

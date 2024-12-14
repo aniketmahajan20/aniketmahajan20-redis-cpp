@@ -5,7 +5,6 @@
 #include <thread>
 #include "./redis_parser.hpp"
 
-#define BUFFER_SIZE 4096
 /*
 Summary: Client Handler Function
 */

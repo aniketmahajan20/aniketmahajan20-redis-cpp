@@ -7,6 +7,7 @@
 
 #define NULL_RESPONSE "$-1\r\n"
 #define DEFUALT_PORT 6379
+#define RECV_BUFFER_SIZE 4096
 
 namespace config{
     extern std::string dir;
