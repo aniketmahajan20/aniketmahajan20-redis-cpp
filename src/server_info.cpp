@@ -85,22 +85,31 @@ void ServerInfo::send_handshake(){
         inet_pton(AF_INET, master_ip.c_str(), &master_addr.sin_addr);
         if (connect(master_fd, (struct sockaddr *) &master_addr, sizeof(master_addr)) != 0) 
             std::cerr << "FAiled to connect to master \n";
+        // Sending a PING to Master
         std::string handshake_message = "*1\r\n$4\r\nPING\r\n";
         send(master_fd, handshake_message.c_str(), handshake_message.size(), 0);
+        // Verifying a PONG is received
         if(get_recv_str(master_fd) != "+PONG\r\n"){
             std::cerr << "Error: Incorrect/No reply for PING from master to replica.";
         }
+        // Sending REPLCONF command 1 to Master
         handshake_message = "*3\r\n$8\r\nREPLCONF\r\n$14\r\nlistening-port\r\n$4\r\n" + 
                                         std::to_string(config::port) + "\r\n";
         send(master_fd, handshake_message.c_str(), handshake_message.size(), 0);
+        // Veryfying +OK\r\n is received
         if(get_recv_str(master_fd) != "+OK\r\n"){
             std::cerr << "Error: Incorrect/No reply for REPLCONF from master to replica.";
         }
+        // Sending REPLCONF command 2 to Master
         handshake_message = "*3\r\n$8\r\nREPLCONF\r\n$4\r\ncapa\r\n$6\r\npsync2\r\n";
         send(master_fd, handshake_message.c_str(), handshake_message.size(), 0);
+        // Veryfying +OK\r\n is received
         if(get_recv_str(master_fd) != "+OK\r\n"){
             std::cerr << "Error: Incorrect/No reply for REPLCONF from master to replica.";
         }
+        // Sending PSYNC command to Master
+        handshake_message = "*3\r\n$5\r\nPSYNC\r\n$1\r\n?\r\n$2\r\n-1\r\n";
+        send(master_fd, handshake_message.c_str(), handshake_message.size(), 0);
     }
 }
 
