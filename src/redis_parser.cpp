@@ -51,6 +51,9 @@ std::string RedisParser::parseRESPCommand(const std::string& input) {
     else if (command == "INFO"){
         return parseINFOCommand(input, pos);
     }
+    else if (command == "REPLCONF"){
+        return parseREPLCONFCommand(input, pos);
+    }
     else {
         return "-ERR unknown command '" + command + "'";
     }
@@ -58,6 +61,11 @@ std::string RedisParser::parseRESPCommand(const std::string& input) {
     
 }
 
+// Parses a REPLCONF Command
+std::string RedisParser::parseREPLCONFCommand(const std::string& input, size_t& pos){
+    std::string response = "OK";
+    return create_string_reponse(response);
+}
 
 // Parses an INFO Command
 std::string RedisParser::parseINFOCommand(const std::string& input, size_t& pos){
@@ -149,7 +157,7 @@ std::string RedisParser::parseSETCommand(const std::string& input, size_t& pos,
         expiry_time = current_time + std::stoi(expiry_value);
     }
     db_handler.set(argument1, argument2, expiry_time);
-    return "+OK\r\n";
+    return OK_RESPONSE;
 }
 
 // Parses an ECHO Command
@@ -164,7 +172,7 @@ std::string RedisParser::parseECHOCommand(const std::string& input, size_t& pos)
 
 // Parses a PING Command
 std::string RedisParser::parsePINGCommand(const std::string& input, size_t& pos){
-    return "+PONG\r\n";
+    return PING_RESPONSE;
 }
 
 

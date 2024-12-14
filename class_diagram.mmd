@@ -43,6 +43,7 @@ classDiagram
         +RedisParser(DatabaseHandler db_handler)
         +parseRESPCommand(string input) string
         -DatabaseHandler db_handler
+        -parseREPLCONFCommand(string input, size_t pos) string
         -parseINFOCommand(string input, size_t pos) string
         -parseKEYSCommand(string input, size_t pos) string
         -parseCONFIGGETCommand(string input, size_t pos, int num_elements) string
