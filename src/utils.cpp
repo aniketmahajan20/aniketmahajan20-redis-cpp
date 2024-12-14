@@ -1,4 +1,5 @@
 #include "./utils.hpp"
+#include "./globals.h"
 
 uint64_t reverseEndianness(uint64_t value) {
     uint64_t reversed = 0;
@@ -25,4 +26,23 @@ long long get_current_time_milli(){
     auto duration = now.time_since_epoch();
     auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
     return milliseconds;
+}
+void parseCommandLineArgs(int argc, char* argv[], ServerInfo& server_info){
+    for (int i = 0; i < argc; i++){
+        std::string arg = argv[i];
+        if (arg == "--dir" && i+1 < argc){
+            config::dir = argv[++i];
+        }
+        if (arg == "--dbfilename" && i+1 < argc){
+            config::dbfilename = argv[++i];
+        }
+        if (arg == "--port" && i+1 < argc){
+            config::port = std::stoi(argv[++i]);
+        }
+        if (arg == "--replicaof" && i+1 < argc){
+            server_info.update_info("slave");
+            server_info.get_master_ip_port(argv[++i]);
+            server_info.send_handshake();
+        }
+    }
 }

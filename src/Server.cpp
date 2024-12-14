@@ -13,11 +13,12 @@
 #include "./globals.h"
 #include "./read_file.hpp"
 #include "./database_handler.hpp"
+#include "./utils.hpp"
 
 
 int main(int argc, char *argv[]) {
   ServerInfo server_info;
-  config::parseCommandLineArgs(argc, argv, server_info);
+  parseCommandLineArgs(argc, argv, server_info);
   DatabaseHandler db_handler(server_info);
   RedisRDBParser rdb_parser = RedisRDBParser(config::dir + "/" + config::dbfilename, db_handler);
   rdb_parser.parse();
