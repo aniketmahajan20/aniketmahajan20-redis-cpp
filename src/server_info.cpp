@@ -87,18 +87,18 @@ void ServerInfo::send_handshake(){
             std::cerr << "FAiled to connect to master \n";
         std::string handshake_message = "*1\r\n$4\r\nPING\r\n";
         send(master_fd, handshake_message.c_str(), handshake_message.size(), 0);
-        if(get_recv_str(master_fd) != "+PONG"){
+        if(get_recv_str(master_fd) != "+PONG\r\n"){
             std::cerr << "Error: Incorrect/No reply for PING from master to replica.";
         }
         handshake_message = "*3\r\n$8\r\nREPLCONF\r\n$14\r\nlistening-port\r\n$4\r\n" + 
                                         std::to_string(config::port) + "\r\n";
         send(master_fd, handshake_message.c_str(), handshake_message.size(), 0);
-        if(get_recv_str(master_fd) != "+OK"){
+        if(get_recv_str(master_fd) != "+OK\r\n"){
             std::cerr << "Error: Incorrect/No reply for REPLCONF from master to replica.";
         }
         handshake_message = "*3\r\n$8\r\nREPLCONF\r\n$4\r\ncapa\r\n$6\r\npsync2\r\n";
         send(master_fd, handshake_message.c_str(), handshake_message.size(), 0);
-        if(get_recv_str(master_fd) != "+OK"){
+        if(get_recv_str(master_fd) != "+OK\r\n"){
             std::cerr << "Error: Incorrect/No reply for REPLCONF from master to replica.";
         }
     }
