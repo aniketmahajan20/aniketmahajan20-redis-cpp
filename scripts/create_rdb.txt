@@ -1,0 +1,12 @@
+How to create an example RDB file:
+
+Open two Terminal windows
+
+Terminal #1> redis-server
+
+Terminal #2> redis-cli set mykey myval Terminal #2> redis-cli save
+
+On Terminal #1:
+
+Press ctrl + c to shut down redis-server. You'll see dump.rdb created
+To inspect its contents you can use: hexdump -C dump.rdb
