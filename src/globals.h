@@ -6,6 +6,7 @@
 #define NULL_RESPONSE "$-1\r\n"
 #define DEFUALT_PORT 6379
 #define RECV_BUFFER_SIZE 4096
+#define RDB_FILE_PATH "./empty.rdb"
 
 namespace config{
     extern std::string dir;
