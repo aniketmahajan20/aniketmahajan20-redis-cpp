@@ -9,9 +9,8 @@
 Summary: Client Handler Function
 */
 void ClientHandler::client_handler(int client_fd){
-    RedisParser parser(db_handler);
-    std::string buf;
     char rec_buf[RECV_BUFFER_SIZE];
+    std::string recv_str;
     while (true){
         memset(rec_buf, 0, RECV_BUFFER_SIZE);
         // wait for the client to send data
@@ -24,12 +23,36 @@ void ClientHandler::client_handler(int client_fd){
             std::cout << "Client disconnected..." << std::endl;
             break;
         }
-        std::string recv_str(rec_buf, 0, bytesReceived);
+        recv_str = std::string(rec_buf, 0, bytesReceived);
         // std::cout << "Received from client: " << recv_str;
-        buf = parser.parseRESPCommand(recv_str);
-        // Send the pong message to client
-        send(client_fd, &buf[0], buf.size(), 0);
+        std::thread t(&ClientHandler::response_handler, this, client_fd, recv_str);
+        t.detach();
     }
+}
+
+// Declared as a friend function in RedisParser. 
+// Therefore has access to private members of that class
+void ClientHandler::response_handler(int client_fd, std::string recv_str){
+    RedisParser* parser = new RedisParser(db_handler);
+    parser->is_communicating = true;                                // Set the is_communicating to true
+    std::string response;
+    // Start the Parser Thread
+    std::thread t = parser->parseRESPCommand_thread(recv_str);
+    t.detach();
+    // TODO: Add condition variables to stop the CPU load of looping and checking flags
+    while(parser->is_communicating){
+        if (parser->response_ready){
+            parser->response_ready = false;
+            response = parser->response_buf;
+            parser->clear_response_buf();
+            parser->response_sent = true;
+        }
+        if (!response.empty()){
+            send(client_fd, &response[0], response.size(), 0);
+            response.clear();
+        }
+    }
+    delete parser;
 }
 
 std::thread ClientHandler::client_handler_thread(int client_fd){

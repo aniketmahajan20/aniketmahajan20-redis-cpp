@@ -9,45 +9,57 @@
 #include <chrono>
 
 #include "./database_handler.hpp"
+#include "./client_handler.hpp"
 
 #define PING_RESPONSE "+PONG\r\n"
 #define OK_RESPONSE   "+OK\r\n"
 
 class RedisParser {
 public:
-    RedisParser(DatabaseHandler& db_handler) : db_handler(db_handler) {}
-    // Parses a Redis command and returns the response
-    std::string parseRESPCommand(const std::string& input);
+    RedisParser(DatabaseHandler& db_handler) : db_handler(db_handler) {
+        this->is_communicating = false;
+        this->response_ready = false;
+        this->response_sent = false;
+    }
+    // Returns a thread of parseRESPCommand function
+    std::thread parseRESPCommand_thread(const std::string& input);
+    std::string fetch_response();
 
 private:
     DatabaseHandler& db_handler;
+    std::atomic<bool> is_communicating;
+    std::atomic<bool> response_ready;
+    std::atomic<bool> response_sent;
+    std::string response_buf;
+    // TODO: Add mutexes for all the flags
     // Parses a PSYNC Command
-    std::string parsePSYNCCommand(const std::string& input, size_t& pos);
+    void parsePSYNCCommand(const std::string& input, size_t& pos);
     // Parses a REPLCONF Command
-    std::string parseREPLCONFCommand(const std::string& input, size_t& pos);
+    void parseREPLCONFCommand(const std::string& input, size_t& pos);
     // Parses an INFO Command
-    std::string parseINFOCommand(const std::string& input, size_t& pos);
+    void parseINFOCommand(const std::string& input, size_t& pos);
     // Parses a KEYS Command
-    std::string parseKEYSCommand(const std::string& input, size_t& pos);
+    void parseKEYSCommand(const std::string& input, size_t& pos);
     // Parses a CONFIG GET Command
-    std::string parseCONFIGGETCommand(const std::string& input, size_t& pos, int num_elements);
+    void parseCONFIGGETCommand(const std::string& input, size_t& pos, int num_elements);
     // Parses a GET Command
-    std::string parseGETCommand(const std::string& input, size_t& pos);
+    void parseGETCommand(const std::string& input, size_t& pos);
     // Parses a SET command
-    std::string parseSETCommand(const std::string& input, size_t& pos, 
+    void parseSETCommand(const std::string& input, size_t& pos, 
                                 int num_elements);
     // Parses an echo command
-    std::string parseECHOCommand(const std::string& input, size_t& pos);
+    void parseECHOCommand(const std::string& input, size_t& pos);
     // Parses an PING command
-    std::string parsePINGCommand(const std::string& input, size_t& pos);
-    // Parses a bulk string in RESP format, e.g., "$9\r\nraspberry\r\n"
-    std::string parseBulkString(const std::string& input, size_t& pos);
+    void parsePINGCommand(const std::string& input, size_t& pos);
+    // Parses a Redis command and returns the response
+    void parseRESPCommand(const std::string& input);
+    // declaring as friend function to access private members of this class
+    friend class ClientHandler;
 
-    // Helper Functions
-    // Create the response for the client
-    std::string create_string_reponse(const std::string& response);
-    // Create array response for the client
-    std::string create_array_reponse(const std::vector<std::string>& response_arr);
+    //Helper functions
+    void wait_till_reponse_sent();
+    void clear_response_buf();
+    void communication_over();
 };
 
 #endif // REDISPARSER_HPP

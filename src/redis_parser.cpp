@@ -1,21 +1,28 @@
-#include <sstream>
 #include <stdexcept>
 #include <iostream>
 #include <unistd.h>
 #include <regex>
+#include <fstream>
+#include <thread>
 
 #include "./redis_parser.hpp"
 #include "./globals.h"
 #include "./utils.hpp"
 
+std::thread RedisParser::parseRESPCommand_thread(const std::string& input){
+    return std::thread([this, input] {RedisParser::parseRESPCommand(input);});
+}
 
-std::string RedisParser::parseRESPCommand(const std::string& input) {
+void RedisParser::parseRESPCommand(const std::string& input) {
     // std::cout << "Received Bytes: " << input << std::endl;
     size_t pos = 0;
 
     // Parse array indicator, e.g., "*2\r\n"
     if (input[pos] != '*') {
-        return "-ERR protocol error: expected array";
+        this->response_buf = "-ERR protocol error: expected array";
+        response_ready = true;
+        this->communication_over();
+        return;
     }
     pos++;
 
@@ -58,7 +65,10 @@ std::string RedisParser::parseRESPCommand(const std::string& input) {
         return parsePSYNCCommand(input, pos);
     }
     else {
-        return "-ERR unknown command '" + command + "'";
+        this->response_buf = "-ERR unknown command '" + command + "'";
+        response_ready = true;
+        this->communication_over();
+        return;
     }    
 }
 
@@ -72,12 +82,15 @@ std::string RedisParser::parsePSYNCCommand(const std::string& input, size_t& pos
 
 
 // Parses a REPLCONF Command
-std::string RedisParser::parseREPLCONFCommand(const std::string& input, size_t& pos){
-    return OK_RESPONSE;
+void RedisParser::parseREPLCONFCommand(const std::string& input, size_t& pos){
+    this->response_buf = OK_RESPONSE;
+    response_ready = true;
+    this->communication_over();
+    return;
 }
 
 // Parses an INFO Command
-std::string RedisParser::parseINFOCommand(const std::string& input, size_t& pos){
+void RedisParser::parseINFOCommand(const std::string& input, size_t& pos){
     std::string command = parseBulkString(input, pos);
     for (auto& c : command) c = std::toupper(c);
     std::string response = "";
@@ -93,11 +106,14 @@ std::string RedisParser::parseINFOCommand(const std::string& input, size_t& pos)
         response = response + "repl_backlog_first_byte_offset:" + std::to_string(server_info.get_repl_backlog_first_byte_offset()) + "\r";
         response = response + "repl_backlog_histlen:" + std::to_string(server_info.get_repl_backlog_histlen()) + "\r";
     }
-    return create_string_reponse(response);
+    this->response_buf = create_string_reponse(response);
+    response_ready = true;
+    this->communication_over();
+    return;
 }
 
 // Parses a KEYS Command
-std::string RedisParser::parseKEYSCommand(const std::string& input, size_t& pos){
+void RedisParser::parseKEYSCommand(const std::string& input, size_t& pos){
     std::string to_match = parseBulkString(input, pos);
     std::string key_to_match = "";
     std::regex pattern;
@@ -116,42 +132,59 @@ std::string RedisParser::parseKEYSCommand(const std::string& input, size_t& pos)
             response_array.push_back(key);
         }
     }
-    return create_array_reponse(response_array);
+    this->response_buf = create_array_reponse(response_array);
+    response_ready = true;
+    this->communication_over();
+    return;
 }
 
 
 
 // Parses a CONFIG GET Command
-std::string RedisParser::parseCONFIGGETCommand(const std::string& input, size_t& pos, int num_elements){
+void RedisParser::parseCONFIGGETCommand(const std::string& input, size_t& pos, int num_elements){
     std::string command = parseBulkString(input, pos);
     for (auto& c : command) c = std::toupper(c);
     if (command == "GET"){
         std::string config_variable = parseBulkString(input, pos);
         if (config_variable == "dir"){
-            return create_array_reponse({config_variable, config::dir});
+            this->response_buf = create_array_reponse({config_variable, config::dir});
+            response_ready = true;
+            this->communication_over();
+            return;
         }
         else if (config_variable == "dbfile"){
-            return create_array_reponse({config_variable, config::dbfilename});
+            this->response_buf = create_array_reponse({config_variable, config::dbfilename});
+            response_ready = true;
+            this->communication_over();
+            return;
         }
     }
     else{
         std::cerr << "Error: Config Followed by unknown Command" << command << std::endl;
     }
-    return "";
+    this->response_buf = "";
+    response_ready = true;
+    this->communication_over();
+    return;
 }
 
 // Parses a GET Command
-std::string RedisParser::parseGETCommand(const std::string& input, size_t& pos){
+void RedisParser::parseGETCommand(const std::string& input, size_t& pos){
     std::string argument = parseBulkString(input, pos);
     std::string response = db_handler.get(argument);
     if (response != NULL_RESPONSE){
-        return create_string_reponse(response);
+        this->response_buf = create_string_reponse(response);
+        response_ready = true;
+        return;
     }
-    return response;
+    this->response_buf = response;
+    response_ready = true;
+    this->communication_over();
+    return;
 }
 
 //Parses a SET Command
-std::string RedisParser::parseSETCommand(const std::string& input, size_t& pos, 
+void RedisParser::parseSETCommand(const std::string& input, size_t& pos, 
                                         int num_elements){
     std::string argument1 = parseBulkString(input, pos);
     std::string argument2 = parseBulkString(input, pos);
@@ -166,60 +199,48 @@ std::string RedisParser::parseSETCommand(const std::string& input, size_t& pos,
         expiry_time = current_time + std::stoi(expiry_value);
     }
     db_handler.set(argument1, argument2, expiry_time);
-    return OK_RESPONSE;
+    this->response_buf = OK_RESPONSE;
+    response_ready = true;
+    this->communication_over();
+    return;
 }
 
 // Parses an ECHO Command
-std::string RedisParser::parseECHOCommand(const std::string& input, size_t& pos){
+void RedisParser::parseECHOCommand(const std::string& input, size_t& pos){
     // Parse argument bulk string, e.g., "$9\r\nraspberry\r\n"
     std::string argument = parseBulkString(input, pos);
 
     // Formulate the RESP response for the ECHO command (bulk string format)
-    return create_string_reponse(argument);
+    this->response_buf = create_string_reponse(argument);
+    response_ready = true;
+    this->communication_over();
+    return;
 }
 
 
 // Parses a PING Command
-std::string RedisParser::parsePINGCommand(const std::string& input, size_t& pos){
-    return PING_RESPONSE;
-}
-
-
-// Parses a bulk string in RESP format, e.g., "$9\r\nraspberry\r\n"
-std::string RedisParser::parseBulkString(const std::string& input, size_t& pos) {
-    if (input[pos] != '$') {
-        throw std::runtime_error("protocol error: expected bulk string");
+void RedisParser::parsePINGCommand(const std::string& input, size_t& pos){
+    this->response_buf = PING_RESPONSE;
+    response_ready = true;
+    this->communication_over();
+    return;
     }
-    pos++;
 
-    // Find length of the bulk string
-    size_t length_end = input.find("\r\n", pos);
-    int length = std::stoi(input.substr(pos, length_end - pos));
-    pos = length_end + 2;
 
-    // Extract the bulk string value
-    std::string bulk_string = input.substr(pos, length);
-    pos += length + 2; // Move position past the bulk string and trailing "\r\n"
+//Helper Functions
 
-    return bulk_string;
+// Function to clear the reponse buffer
+void RedisParser::clear_response_buf(){
+    this->response_buf.clear();
 }
 
-
-
-// Helper Functions
-
-
-// Create array response for the client
-std::string RedisParser::create_array_reponse(const std::vector<std::string>& response_arr){
-    std::string response = "";
-    for (int i = 0; i < response_arr.size(); i++){
-        response += create_string_reponse(response_arr[i]);
-    }
-    return "*" + std::to_string(response_arr.size()) + "\r\n" + response;
+// Wait till the response is sent by the client Handler
+void RedisParser::wait_till_reponse_sent(){
+    while(!this->response_sent) {}
+    this->response_sent = false;
 }
 
-// Create the response for the client
-std::string RedisParser::create_string_reponse(const std::string& response){
-    return "$" + std::to_string(response.size()) + "\r\n" + response + "\r\n"; 
+void RedisParser::communication_over(){
+    this->wait_till_reponse_sent();
+    this->is_communicating = false;
 }
-
