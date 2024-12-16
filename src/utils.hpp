@@ -14,5 +14,11 @@ void print_file_hex(std::ifstream& file);
 long long get_current_time_milli();
 std::string get_recv_str(int file_descriptor);
 void parseCommandLineArgs(int argc, char* argv[], ServerInfo& server_info);
+// Create the response for the client
+std::string create_string_reponse(const std::string& response);
+// Create array response for the client
+std::string create_array_reponse(const std::vector<std::string>& response_arr);
+// Parses a bulk string in RESP format, e.g., "$9\r\nraspberry\r\n"
+std::string parseBulkString(const std::string& input, size_t& pos);
 
 #endif //UTILS_HPP

@@ -57,3 +57,36 @@ void parseCommandLineArgs(int argc, char* argv[], ServerInfo& server_info){
         }
     }
 }
+
+// Create the response for the client
+std::string create_string_reponse(const std::string& response){
+    return "$" + std::to_string(response.size()) + "\r\n" + response + "\r\n"; 
+}
+
+// Create array response for the client
+std::string create_array_reponse(const std::vector<std::string>& response_arr){
+    std::string response = "";
+    for (int i = 0; i < response_arr.size(); i++){
+        response += create_string_reponse(response_arr[i]);
+    }
+    return "*" + std::to_string(response_arr.size()) + "\r\n" + response;
+}
+
+// Parses a bulk string in RESP format, e.g., "$9\r\nraspberry\r\n"
+std::string parseBulkString(const std::string& input, size_t& pos) {
+    if (input[pos] != '$') {
+        throw std::runtime_error("protocol error: expected bulk string");
+    }
+    pos++;
+
+    // Find length of the bulk string
+    size_t length_end = input.find("\r\n", pos);
+    int length = std::stoi(input.substr(pos, length_end - pos));
+    pos = length_end + 2;
+
+    // Extract the bulk string value
+    std::string bulk_string = input.substr(pos, length);
+    pos += length + 2; // Move position past the bulk string and trailing "\r\n"
+
+    return bulk_string;
+}
