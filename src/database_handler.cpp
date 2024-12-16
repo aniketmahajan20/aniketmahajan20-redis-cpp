@@ -1,6 +1,6 @@
-#include "./database_handler.hpp"
-#include "./utils.hpp"
-#include "./globals.h"
+#include "../include/redis/database_handler.hpp"
+#include "../include/redis/utils.hpp"
+#include "../include/redis/globals.h"
 
 ServerInfo DatabaseHandler::get_server_info(){
     return server_info;

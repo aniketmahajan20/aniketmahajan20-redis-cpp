@@ -1,4 +1,4 @@
-#include "./globals.h"
+#include "../include/redis/globals.h"
 
 namespace config{
     std::string dir;

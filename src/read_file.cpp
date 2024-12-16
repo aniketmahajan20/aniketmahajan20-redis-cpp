@@ -1,7 +1,8 @@
 #include <fstream>
 #include <iostream>
-#include "./read_file.hpp"
-#include "./client_handler.hpp"
+
+#include "../include/redis/read_file.hpp"
+#include "../include/redis/client_handler.hpp"
 
 // Public Member Functions
 

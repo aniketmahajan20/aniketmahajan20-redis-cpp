@@ -1,13 +1,13 @@
 #include <random>
-#include "./server_info.hpp"
 #include <sys/socket.h>
 #include <iostream>
 #include <arpa/inet.h>
 #include <regex>
 #include <cstring>
 
-#include "./globals.h"
-#include "utils.hpp"
+#include "../include/redis/server_info.hpp"
+#include "../include/redis/globals.h"
+#include "../include/redis/utils.hpp"
 
 #define REPLID_LEN 40
 #define LOCALHOST "127.0.0.1"

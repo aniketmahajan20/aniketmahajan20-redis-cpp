@@ -1,7 +1,7 @@
 #include <arpa/inet.h>
 
-#include "./utils.hpp"
-#include "./globals.h"
+#include "../include/redis/utils.hpp"
+#include "../include/redis/globals.h"
 
 uint64_t reverseEndianness(uint64_t value) {
     uint64_t reversed = 0;

@@ -5,9 +5,9 @@
 #include <fstream>
 #include <thread>
 
-#include "./redis_parser.hpp"
-#include "./globals.h"
-#include "./utils.hpp"
+#include "../include/redis/redis_parser.hpp"
+#include "../include/redis/globals.h"
+#include "../include/redis/utils.hpp"
 
 std::thread RedisParser::parseRESPCommand_thread(const std::string& input){
     return std::thread([this, input] {RedisParser::parseRESPCommand(input);});
@@ -83,7 +83,6 @@ void RedisParser::parsePSYNCCommand(const std::string& input, size_t& pos){
     std::ifstream file(RDB_FILE_PATH, std::ios::binary);
     std::string response = read_rdb_file_binary(file);
     this->response_buf = "$" + std::to_string(response.size()) + "\r\n" + response;
-    std::cout << response_buf << std::endl;
     this->response_ready = true;
     this->communication_over();
 }

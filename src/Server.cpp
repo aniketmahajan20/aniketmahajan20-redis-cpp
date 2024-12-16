@@ -9,11 +9,11 @@
 #include <netdb.h>
 #include <thread>
 
-#include "./client_handler.hpp"
-#include "./globals.h"
-#include "./read_file.hpp"
-#include "./database_handler.hpp"
-#include "./utils.hpp"
+#include "../include/redis/client_handler.hpp"
+#include "../include/redis/globals.h"
+#include "../include/redis/read_file.hpp"
+#include "../include/redis/database_handler.hpp"
+#include "../include/redis/utils.hpp"
 
 
 int main(int argc, char *argv[]) {

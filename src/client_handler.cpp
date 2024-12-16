@@ -3,8 +3,8 @@
 #include <string>
 #include <sys/socket.h>
 
-#include "./client_handler.hpp"
-#include "./globals.h"
+#include "../include/redis/client_handler.hpp"
+#include "../include/redis/globals.h"
 /*
 Summary: Client Handler Function
 */
