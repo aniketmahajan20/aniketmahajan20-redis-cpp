@@ -13,6 +13,7 @@ uint64_t reverseEndianness(uint64_t value) {
     return reversed;
 }
 
+// Prints the RDB file in hex
 void print_file_hex(std::ifstream& file){
     while(file){
         uint64_t byte;
@@ -38,6 +39,7 @@ std::string get_recv_str(int file_descriptor){
     return recv_str;
 }
 
+// Utility function to parse the command line arguments
 void parseCommandLineArgs(int argc, char* argv[], ServerInfo& server_info){
     for (int i = 0; i < argc; i++){
         std::string arg = argv[i];
@@ -72,6 +74,18 @@ std::string create_array_reponse(const std::vector<std::string>& response_arr){
     return "*" + std::to_string(response_arr.size()) + "\r\n" + response;
 }
 
+std::string read_rdb_file_binary(std::ifstream& file){
+    std::string binary_contents;
+    while(file){
+        uint64_t byte;
+        file.read(reinterpret_cast<char*>(&byte), sizeof(byte));
+        uint64_t reverseByte = reverseEndianness(byte);
+        binary_contents += uint64ToString(reverseByte);
+        // binary_contents += std::bitset<64>(reverseByte).to_string();
+    }
+    return binary_contents;
+}
+
 // Parses a bulk string in RESP format, e.g., "$9\r\nraspberry\r\n"
 std::string parseBulkString(const std::string& input, size_t& pos) {
     if (input[pos] != '$') {
@@ -89,4 +103,16 @@ std::string parseBulkString(const std::string& input, size_t& pos) {
     pos += length + 2; // Move position past the bulk string and trailing "\r\n"
 
     return bulk_string;
+}
+
+// converts uint64_t value to a string with characters for each byte
+std::string uint64ToString(uint64_t value) {
+    std::string result;
+
+    // Extract each byte from the uint64_t (big-endian order)
+    for (int i = sizeof(uint64_t) - 1; i >= 0; --i) {
+        char byte = static_cast<char>((value >> (i * 8)) & 0xFF);
+        result += byte; // Append byte as a character to the string
+    }
+    return result;
 }

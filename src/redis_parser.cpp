@@ -73,11 +73,19 @@ void RedisParser::parseRESPCommand(const std::string& input) {
 }
 
 // Parses a PSYNC Command
-std::string RedisParser::parsePSYNCCommand(const std::string& input, size_t& pos){
+void RedisParser::parsePSYNCCommand(const std::string& input, size_t& pos){
     ServerInfo server_info = db_handler.get_server_info();
     // Hardcoding the response as suggested by the requirements
-    std::string response = "+FULLRESYNC " + server_info.get_master_replid() + " 0\r\n";
-    return response;
+    this->response_buf = "+FULLRESYNC " + server_info.get_master_replid() + " 0\r\n";
+    this->response_ready = true;
+    this->wait_till_reponse_sent();
+    // Send an empty file to the replica database
+    std::ifstream file(RDB_FILE_PATH, std::ios::binary);
+    std::string response = read_rdb_file_binary(file);
+    this->response_buf = "$" + std::to_string(response.size()) + "\r\n" + response;
+    std::cout << response_buf << std::endl;
+    this->response_ready = true;
+    this->communication_over();
 }
 
 
@@ -224,7 +232,7 @@ void RedisParser::parsePINGCommand(const std::string& input, size_t& pos){
     response_ready = true;
     this->communication_over();
     return;
-    }
+}
 
 
 //Helper Functions
