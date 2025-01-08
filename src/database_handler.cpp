@@ -2,7 +2,7 @@
 #include "../include/redis/utils.hpp"
 #include "../include/redis/globals.h"
 
-ServerInfo DatabaseHandler::get_server_info(){
+ServerInfo& DatabaseHandler::get_server_info(){
     return server_info;
 }
 

@@ -53,7 +53,7 @@ void parseCommandLineArgs(int argc, char* argv[], ServerInfo& server_info){
             config::port = std::stoi(argv[++i]);
         }
         if (arg == "--replicaof" && i+1 < argc){
-            server_info.update_info("slave");
+            server_info.update_role("slave");
             server_info.get_master_ip_port(argv[++i]);
             server_info.send_handshake();
         }

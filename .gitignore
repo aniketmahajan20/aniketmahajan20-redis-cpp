@@ -49,3 +49,4 @@ build/
 vcpkg_installed
 test/
 .vscode/
+TODO.txt

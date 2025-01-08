@@ -22,8 +22,7 @@ public:
         this->response_sent = false;
     }
     // Returns a thread of parseRESPCommand function
-    std::thread parseRESPCommand_thread(const std::string& input);
-    std::string fetch_response();
+    std::thread parseRESPCommand_thread(int client_fd, const std::string& input);
 
 private:
     DatabaseHandler& db_handler;
@@ -33,7 +32,7 @@ private:
     std::string response_buf;
     // TODO: Add mutexes for all the flags
     // Parses a PSYNC Command
-    void parsePSYNCCommand(const std::string& input, size_t& pos);
+    void parsePSYNCCommand(int client_fd, const std::string& input, size_t& pos);
     // Parses a REPLCONF Command
     void parseREPLCONFCommand(const std::string& input, size_t& pos);
     // Parses an INFO Command
@@ -52,7 +51,7 @@ private:
     // Parses an PING command
     void parsePINGCommand(const std::string& input, size_t& pos);
     // Parses a Redis command and returns the response
-    void parseRESPCommand(const std::string& input);
+    void parseRESPCommand(int client_fd, const std::string& input);
     // declaring as friend function to access private members of this class
     friend class ClientHandler;
 

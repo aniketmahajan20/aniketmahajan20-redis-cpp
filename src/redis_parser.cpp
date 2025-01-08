@@ -8,12 +8,13 @@
 #include "../include/redis/redis_parser.hpp"
 #include "../include/redis/globals.h"
 #include "../include/redis/utils.hpp"
+#include <sys/socket.h>
 
-std::thread RedisParser::parseRESPCommand_thread(const std::string& input){
-    return std::thread([this, input] {RedisParser::parseRESPCommand(input);});
+std::thread RedisParser::parseRESPCommand_thread(int client_fd, const std::string& input){
+    return std::thread([this, client_fd, input] {RedisParser::parseRESPCommand(client_fd, input);});
 }
 
-void RedisParser::parseRESPCommand(const std::string& input) {
+void RedisParser::parseRESPCommand(int client_fd, const std::string& input) {
     // std::cout << "Received Bytes: " << input << std::endl;
     size_t pos = 0;
 
@@ -35,7 +36,7 @@ void RedisParser::parseRESPCommand(const std::string& input) {
     std::string command = parseBulkString(input, pos);
 
     // Convert command to uppercase to make it case-insensitive
-    for (auto& c : command) c = std::toupper(c);
+    std::transform(command.begin(), command.end(), command.begin(), ::toupper);
 
     if (command == "ECHO"){
         return parseECHOCommand(input, pos);
@@ -62,7 +63,7 @@ void RedisParser::parseRESPCommand(const std::string& input) {
         return parseREPLCONFCommand(input, pos);
     }
     else if (command == "PSYNC"){
-        return parsePSYNCCommand(input, pos);
+        return parsePSYNCCommand(client_fd, input, pos);
     }
     else {
         this->response_buf = "-ERR unknown command '" + command + "'";
@@ -73,8 +74,13 @@ void RedisParser::parseRESPCommand(const std::string& input) {
 }
 
 // Parses a PSYNC Command
-void RedisParser::parsePSYNCCommand(const std::string& input, size_t& pos){
-    ServerInfo server_info = db_handler.get_server_info();
+void RedisParser::parsePSYNCCommand(int client_fd, const std::string& input, size_t& pos){
+    ServerInfo& server_info = db_handler.get_server_info();
+    // If the server is a master, then add the slave to connected slaves count
+    if (server_info.get_role() == "master"){
+        server_info.update_connected_slaves(server_info.get_connected_slaves() + 1);
+        server_info.add_connected_slave(client_fd);
+    }
     // Hardcoding the response as suggested by the requirements
     this->response_buf = "+FULLRESYNC " + server_info.get_master_replid() + " 0\r\n";
     this->response_ready = true;
@@ -102,7 +108,7 @@ void RedisParser::parseINFOCommand(const std::string& input, size_t& pos){
     for (auto& c : command) c = std::toupper(c);
     std::string response = "";
     if (command == "REPLICATION"){
-        ServerInfo server_info = db_handler.get_server_info();
+        ServerInfo& server_info = db_handler.get_server_info();
         response = response + "role:" + server_info.get_role() + "\r";
         response = response + "connected_slaves:" + std::to_string(server_info.get_connected_slaves()) + "\r";
         response = response + "master_replid:" + server_info.get_master_replid() + "\r";
@@ -130,7 +136,7 @@ void RedisParser::parseKEYSCommand(const std::string& input, size_t& pos){
         pattern = std::regex("(" + key_to_match + ")(.*)");
     }
     else {
-        std::regex pattern(to_match);
+        pattern = std::regex(to_match);
     }
     std::vector<std::string> response_array;
     for (auto pair: db_handler.database){
@@ -208,6 +214,16 @@ void RedisParser::parseSETCommand(const std::string& input, size_t& pos,
     db_handler.set(argument1, argument2, expiry_time);
     this->response_buf = OK_RESPONSE;
     response_ready = true;
+
+    // Propagate the SET command to all connected slaves
+    ServerInfo& server_info = db_handler.get_server_info();
+    if (server_info.get_role() == "master"){
+        for (int i = 0; i < server_info.get_connected_slaves(); i++){
+            int fd = server_info.get_connected_slave_fd(i);
+            send(fd, &input[0], input.size(), 0);
+        }
+    }
+    // Wait to finish communication, otherwise parser is deleted before the response is sent
     this->communication_over();
     return;
 }

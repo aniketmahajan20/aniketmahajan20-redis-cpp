@@ -40,11 +40,10 @@ int ServerInfo::get_repl_backlog_first_byte_offset(){
 int ServerInfo::get_repl_backlog_histlen(){
     return repl_backlog_histlen;
 }
-void ServerInfo::update_info(std::string role){
+void ServerInfo::update_role(std::string role){
     this->role.assign(role);
 }
-void ServerInfo::update_info(std::string role, int connected_slaves){
-    this->role.assign(role);
+void ServerInfo::update_connected_slaves(int connected_slaves){
     this->connected_slaves = connected_slaves;
 }
 
@@ -112,6 +111,14 @@ void ServerInfo::send_handshake(){
         handshake_message = "*3\r\n$5\r\nPSYNC\r\n$1\r\n?\r\n$2\r\n-1\r\n";
         send(master_fd, handshake_message.c_str(), handshake_message.size(), 0);
     }
+}
+
+void ServerInfo::add_connected_slave(int fd){
+    connected_slaves_fd.push_back(fd);
+}
+
+int ServerInfo::get_connected_slave_fd(int index){
+    return connected_slaves_fd[index];
 }
 
 //Helper Functions

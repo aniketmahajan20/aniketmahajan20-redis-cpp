@@ -32,7 +32,7 @@ public:
     void set_without_lock(std::string key, std::string value,long expiry_time);
 
     //Function to access the ServerInfo
-    ServerInfo get_server_info();
+    ServerInfo& get_server_info();
     
     // Function to get the value based on the key
     std::string get(std::string key);

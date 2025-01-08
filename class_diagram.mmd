@@ -67,8 +67,8 @@ classDiagram
         +get_repl_backlog_size() int
         +get_repl_backlog_first_byte_offset() int
         +get_repl_backlog_histlen() int
-        +update_info(string role)
-        +update_info(string role, int connected_slaves)
+        +update_role(string role)
+        +update_connected_slaves(int connected_slaves)
         +send_handshake()
         +get_master_ip_port(string args)
 

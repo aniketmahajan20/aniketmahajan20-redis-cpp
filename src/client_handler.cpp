@@ -37,9 +37,10 @@ void ClientHandler::response_handler(int client_fd, std::string recv_str){
     parser->is_communicating = true;                                // Set the is_communicating to true
     std::string response;
     // Start the Parser Thread
-    std::thread t = parser->parseRESPCommand_thread(recv_str);
+    std::thread t = parser->parseRESPCommand_thread(client_fd, recv_str);
     t.detach();
-    // TODO: Add condition variables to stop the CPU load of looping and checking flags
+    // TODO: Add condition variables to stop the CPU load of looping and checking flags 
+    // use condition variables to wait for the response to be ready
     while(parser->is_communicating){
         if (parser->response_ready){
             parser->response_ready = false;
