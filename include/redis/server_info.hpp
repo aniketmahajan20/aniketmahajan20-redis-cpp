@@ -30,10 +30,12 @@ public:
     int get_repl_backlog_histlen();
     void update_role(std::string role);
     void update_connected_slaves(int connected_slaves);
+    void connect_to_master();
     void send_handshake();
     void get_master_ip_port(const std::string& args);
     void add_connected_slave(int fd);
     int get_connected_slave_fd(int index);
+    const int get_master_fd();
 private:
     std::string role;
     int connected_slaves;
@@ -46,6 +48,7 @@ private:
     int repl_backlog_size;
     int repl_backlog_first_byte_offset;
     int repl_backlog_histlen;
+    int master_fd;
     std::vector<int> connected_slaves_fd;
     std::string generate_master_replid();
 };

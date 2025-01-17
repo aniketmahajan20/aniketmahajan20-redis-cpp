@@ -20,6 +20,7 @@ int main(int argc, char *argv[]) {
   ServerInfo server_info;
   parseCommandLineArgs(argc, argv, server_info);
   DatabaseHandler db_handler(server_info);
+  ClientHandler *handler = new ClientHandler(db_handler);
   RedisRDBParser rdb_parser = RedisRDBParser(config::dir + "/" + config::dbfilename, db_handler);
   rdb_parser.parse();
   // Flush after every std::cout / std::cerr
@@ -60,7 +61,12 @@ int main(int argc, char *argv[]) {
     std::cerr << "listen failed\n";
     return 1;
   }
-  ClientHandler *handler = new ClientHandler(db_handler);
+
+  server_info.send_handshake();
+  std::thread t = handler->client_handler_thread(server_info.get_master_fd());
+  std::cout << "Master connected:" << server_info.get_master_fd() << std::endl;
+  t.detach();
+  
   while (true){
     struct sockaddr_in client_addr;
     int client_addr_len = sizeof(client_addr);

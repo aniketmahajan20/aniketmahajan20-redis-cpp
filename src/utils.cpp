@@ -55,7 +55,7 @@ void parseCommandLineArgs(int argc, char* argv[], ServerInfo& server_info){
         if (arg == "--replicaof" && i+1 < argc){
             server_info.update_role("slave");
             server_info.get_master_ip_port(argv[++i]);
-            server_info.send_handshake();
+            server_info.connect_to_master();
         }
     }
 }

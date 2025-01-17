@@ -4,6 +4,7 @@
 #include <arpa/inet.h>
 #include <regex>
 #include <cstring>
+#include <thread>
 
 #include "../include/redis/server_info.hpp"
 #include "../include/redis/globals.h"
@@ -64,16 +65,16 @@ void ServerInfo::get_master_ip_port(const std::string& args){
     }
 }
 
-void ServerInfo::send_handshake(){
+void ServerInfo::connect_to_master(){
     if (this->role == "slave"){
-        int master_fd = socket(AF_INET, SOCK_STREAM, 0);
-        if (master_fd < 0){
+        this->master_fd = socket(AF_INET, SOCK_STREAM, 0);
+        if (this->master_fd < 0){
             std::cerr << "Error: Failed to create master server socket.\n";
         }
         // Since the tester restarts your program quite often, setting SO_REUSEADDR
         // ensures that we don't run into 'Address already in use' errors
         int reuse = 1;
-        if (setsockopt(master_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0) {
+        if (setsockopt(this->master_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0) {
             std::cerr << "setsockopt failed\n";
         }
         std::cout << "Connecting to master at " << this->master_ip << ":" << this->master_port << std::endl;
@@ -81,35 +82,42 @@ void ServerInfo::send_handshake(){
         master_addr.sin_family = AF_INET;
         master_addr.sin_addr.s_addr = INADDR_ANY;
         master_addr.sin_port = htons(this->master_port);
-        inet_pton(AF_INET, master_ip.c_str(), &master_addr.sin_addr);
-        if (connect(master_fd, (struct sockaddr *) &master_addr, sizeof(master_addr)) != 0) 
+        inet_pton(AF_INET, this->master_ip.c_str(), &master_addr.sin_addr);
+        if (connect(this->master_fd, (struct sockaddr *) &master_addr, sizeof(master_addr)) != 0) 
             std::cerr << "FAiled to connect to master \n";
+    }
+}
+void ServerInfo::send_handshake(){
+    if (this->role == "slave"){
         // Sending a PING to Master
         std::string handshake_message = "*1\r\n$4\r\nPING\r\n";
-        send(master_fd, handshake_message.c_str(), handshake_message.size(), 0);
+        send(this->master_fd, handshake_message.c_str(), handshake_message.size(), 0);
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
         // Verifying a PONG is received
-        if(get_recv_str(master_fd) != "+PONG\r\n"){
-            std::cerr << "Error: Incorrect/No reply for PING from master to replica.";
-        }
+        // if(get_recv_str(this->master_fd) != "+PONG\r\n"){
+        //     std::cerr << "Error: Incorrect/No reply for PING from master to replica.";
+        // }
         // Sending REPLCONF command 1 to Master
         handshake_message = "*3\r\n$8\r\nREPLCONF\r\n$14\r\nlistening-port\r\n$4\r\n" + 
                                         std::to_string(config::port) + "\r\n";
-        send(master_fd, handshake_message.c_str(), handshake_message.size(), 0);
+        send(this->master_fd, handshake_message.c_str(), handshake_message.size(), 0);
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
         // Veryfying +OK\r\n is received
-        if(get_recv_str(master_fd) != "+OK\r\n"){
-            std::cerr << "Error: Incorrect/No reply for REPLCONF from master to replica.";
-        }
+        // if(get_recv_str(this->master_fd) != "+OK\r\n"){
+        //     std::cerr << "Error: Incorrect/No reply for REPLCONF from master to replica.";
+        // }
         // Sending REPLCONF command 2 to Master
         handshake_message = "*3\r\n$8\r\nREPLCONF\r\n$4\r\ncapa\r\n$6\r\npsync2\r\n";
-        send(master_fd, handshake_message.c_str(), handshake_message.size(), 0);
+        send(this->master_fd, handshake_message.c_str(), handshake_message.size(), 0);
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
         // Veryfying +OK\r\n is received
-        if(get_recv_str(master_fd) != "+OK\r\n"){
-            std::cerr << "Error: Incorrect/No reply for REPLCONF from master to replica.";
-        }
+        // if(get_recv_str(this->master_fd) != "+OK\r\n"){
+        //     std::cerr << "Error: Incorrect/No reply for REPLCONF from master to replica.";
+        // }
         // Sending PSYNC command to Master
         // Telling Master that replica has no data at all and request for Full Resync
         handshake_message = "*3\r\n$5\r\nPSYNC\r\n$1\r\n?\r\n$2\r\n-1\r\n";
-        send(master_fd, handshake_message.c_str(), handshake_message.size(), 0);
+        send(this->master_fd, handshake_message.c_str(), handshake_message.size(), 0);
     }
 }
 
@@ -119,6 +127,10 @@ void ServerInfo::add_connected_slave(int fd){
 
 int ServerInfo::get_connected_slave_fd(int index){
     return connected_slaves_fd[index];
+}
+
+const int ServerInfo::get_master_fd(){
+    return master_fd;
 }
 
 //Helper Functions
