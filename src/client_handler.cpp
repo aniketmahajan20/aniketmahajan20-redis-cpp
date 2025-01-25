@@ -24,9 +24,11 @@ void ClientHandler::client_handler(int client_fd){
             break;
         }
         recv_str = std::string(rec_buf, 0, bytesReceived);
-        // std::cout << "Received from client: " << recv_str;
-        std::thread t(&ClientHandler::response_handler, this, client_fd, recv_str);
-        t.detach();
+
+        // std::cout << "Received Bytes: " << recv_str << std::endl;
+        task_queue.enqueue([this, client_fd, recv_str]() {
+            response_handler(client_fd, recv_str);
+        });
     }
 }
 
@@ -58,4 +60,15 @@ void ClientHandler::response_handler(int client_fd, std::string recv_str){
 
 std::thread ClientHandler::client_handler_thread(int client_fd){
     return std::thread([this, client_fd] {ClientHandler::client_handler(client_fd);});
+}
+
+
+void ClientHandler::worker_thread() {
+    while (true) {
+        std::function<void()> task;
+        if (task_queue.dequeue(&task) == false) {
+            return;
+        }
+        task();
+    }
 }

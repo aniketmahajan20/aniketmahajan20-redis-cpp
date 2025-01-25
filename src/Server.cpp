@@ -62,11 +62,11 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  server_info.send_handshake();
-  std::thread t = handler->client_handler_thread(server_info.get_master_fd());
+  std::thread x = handler->client_handler_thread(server_info.get_master_fd());
   std::cout << "Master connected:" << server_info.get_master_fd() << std::endl;
-  t.detach();
-  
+  x.detach();
+  server_info.send_handshake();
+
   while (true){
     struct sockaddr_in client_addr;
     int client_addr_len = sizeof(client_addr);

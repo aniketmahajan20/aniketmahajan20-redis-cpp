@@ -84,7 +84,7 @@ void ServerInfo::connect_to_master(){
         master_addr.sin_port = htons(this->master_port);
         inet_pton(AF_INET, this->master_ip.c_str(), &master_addr.sin_addr);
         if (connect(this->master_fd, (struct sockaddr *) &master_addr, sizeof(master_addr)) != 0) 
-            std::cerr << "FAiled to connect to master \n";
+            std::cerr << "Failed to connect to master \n";
     }
 }
 void ServerInfo::send_handshake(){
