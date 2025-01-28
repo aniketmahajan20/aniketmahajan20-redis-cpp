@@ -11,7 +11,7 @@
 #include "./redis_parser.hpp"
 #include "./non_blocking_queue.hpp"
 
-constexpr int THREAD_POOL_SIZE = 4;
+constexpr int THREAD_POOL_SIZE = 0;
 
 /*
 Summary: Client Handler Function
@@ -19,7 +19,6 @@ Summary: Client Handler Function
 class ClientHandler {
 public: 
   ClientHandler(DatabaseHandler& db_handler) : db_handler(db_handler),
-                                               stop_pool(false),
                                                is_replica(false) {
     for (int i = 0; i < THREAD_POOL_SIZE; i++) {
       workers.emplace_back(&ClientHandler::worker_thread, this);
@@ -39,12 +38,10 @@ private:
   bool is_replica;
   std::vector<std::thread> workers;
   NonBlockingQueue<std::function<void()>> task_queue;
-  std::mutex queue_mutex;
-  std::condition_variable cv;
-  bool stop_pool;
   void worker_thread();
   void client_handler(int client_fd);
   void response_handler(int client_fd, std::string recv_str);
+  void enqueueTask(const std::function<void()>& task);
 };
 
 #endif //CLIENTHANDLER_HPP

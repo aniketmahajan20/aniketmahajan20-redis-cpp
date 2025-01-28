@@ -17,16 +17,17 @@ std::thread RedisParser::parseRESPCommand_thread(int client_fd, const std::strin
 void RedisParser::parseRESPCommand(int client_fd, const std::string& input) {
     // std::cout << "Received Bytes: " << input << std::endl;
     size_t pos = 0;
-
     // Parse array indicator, e.g., "*2\r\n"
     if (input[pos] != '*') {
-        this->response_buf = "-ERR protocol error: expected array";
-        response_ready = true;
+        // this->response_buf = "-ERR protocol error: expected array";
+        // response_ready = true;
+        // std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        this->response_sent = true;
         this->communication_over();
         return;
     }
     pos++;
-
+    std::cout << "In Parse RESP Command" << std::endl;
     // Read number of elements
     size_t elements_end = input.find("\r\n", pos);
     int num_elements = std::stoi(input.substr(pos, elements_end - pos));
@@ -199,12 +200,14 @@ void RedisParser::parseGETCommand(const std::string& input, size_t& pos){
 //Parses a SET Command
 void RedisParser::parseSETCommand(const std::string& input, size_t& pos, 
                                         int num_elements){
+    std::cout << "Parsing Command:" << input << std::endl;
     std::string argument1 = parseBulkString(input, pos);
     std::string argument2 = parseBulkString(input, pos);
     long expiry_time = 0;
     // TODO: Implement error handling for cases that px was incorrect 
     // or the time value is not provided
     // Currently Assumed that PX and expiry time are valid commands provided
+    std::cout << "In SET Command" << std::endl;
     if (num_elements > 3){
         std::string expiry_command = parseBulkString(input, pos);
         std::string expiry_value = parseBulkString(input, pos);

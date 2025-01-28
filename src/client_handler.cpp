@@ -25,10 +25,12 @@ void ClientHandler::client_handler(int client_fd){
         }
         recv_str = std::string(rec_buf, 0, bytesReceived);
 
-        // std::cout << "Received Bytes: " << recv_str << std::endl;
-        task_queue.enqueue([this, client_fd, recv_str]() {
+        std::cout << "Received Bytes: " << recv_str << std::endl;
+        this->enqueueTask([this, client_fd, recv_str]() {
             response_handler(client_fd, recv_str);
         });
+        std::cout << "Task Enqueued" << std::endl;
+        // std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 }
 
@@ -40,7 +42,6 @@ void ClientHandler::response_handler(int client_fd, std::string recv_str){
     std::string response;
     // Start the Parser Thread
     std::thread t = parser->parseRESPCommand_thread(client_fd, recv_str);
-    t.detach();
     // TODO: Add condition variables to stop the CPU load of looping and checking flags 
     // use condition variables to wait for the response to be ready
     while(parser->is_communicating){
@@ -55,6 +56,8 @@ void ClientHandler::response_handler(int client_fd, std::string recv_str){
             response.clear();
         }
     }
+    std::cout << "Communication Over" << std::endl;
+    t.join();
     delete parser;
 }
 
@@ -66,9 +69,14 @@ std::thread ClientHandler::client_handler_thread(int client_fd){
 void ClientHandler::worker_thread() {
     while (true) {
         std::function<void()> task;
-        if (task_queue.dequeue(&task) == false) {
-            return;
+        if (task_queue.dequeue(&task)) {
+            // task(); // Execute the task
+        } else {
+            continue; // No tasks, yield to avoid busy-waiting
         }
-        task();
     }
+}
+
+void ClientHandler::enqueueTask(const std::function<void()>& task) {
+    task_queue.enqueue(task);
 }
