@@ -10,6 +10,12 @@
 #include "../include/redis/utils.hpp"
 #include <sys/socket.h>
 
+void RedisParser::send_response(){
+    send(this->client_fd, &this->response_buf[0], this->response_buf.size(), 0);
+    this->response_buf.clear();
+    return;
+}
+
 std::thread RedisParser::parseRESPCommand_thread(int client_fd, const std::string& input){
     return std::thread([this, client_fd, input] {RedisParser::parseRESPCommand(client_fd, input);});
 }
@@ -43,7 +49,7 @@ void RedisParser::parseRESPCommand(int client_fd, const std::string& input) {
         return parseECHOCommand(input, pos);
     }
     else if (command == "PING"){
-        return parsePINGCommand(input, pos);
+        return parsePINGCommand();
     }
     else if (command == "SET"){
         return parseSETCommand(input, pos, num_elements);
@@ -52,7 +58,7 @@ void RedisParser::parseRESPCommand(int client_fd, const std::string& input) {
         return parseGETCommand(input, pos);
     }
     else if (command == "CONFIG"){
-        return parseCONFIGGETCommand(input, pos, num_elements);
+        return parseCONFIGGETCommand(input, pos);
     }
     else if (command == "KEYS"){
         return parseKEYSCommand(input, pos);
@@ -61,21 +67,21 @@ void RedisParser::parseRESPCommand(int client_fd, const std::string& input) {
         return parseINFOCommand(input, pos);
     }
     else if (command == "REPLCONF"){
-        return parseREPLCONFCommand(input, pos);
+        return parseREPLCONFCommand();
     }
     else if (command == "PSYNC"){
-        return parsePSYNCCommand(client_fd, input, pos);
+        return parsePSYNCCommand(client_fd);
     }
     else {
         this->response_buf = "-ERR unknown command '" + command + "'";
-        response_ready = true;
-        this->communication_over();
+        // response_ready = true;
+        this->send_response();
         return;
     }    
 }
 
 // Parses a PSYNC Command
-void RedisParser::parsePSYNCCommand(int client_fd, const std::string& input, size_t& pos){
+void RedisParser::parsePSYNCCommand(int client_fd){
     ServerInfo& server_info = db_handler.get_server_info();
     // If the server is a master, then add the slave to connected slaves count
     if (server_info.get_role() == "master"){
@@ -84,22 +90,22 @@ void RedisParser::parsePSYNCCommand(int client_fd, const std::string& input, siz
     }
     // Hardcoding the response as suggested by the requirements
     this->response_buf = "+FULLRESYNC " + server_info.get_master_replid() + " 0\r\n";
-    this->response_ready = true;
-    this->wait_till_reponse_sent();
+    // this->response_ready = true;
+    this->send_response();
     // Send an empty file to the replica database
     std::ifstream file(RDB_FILE_PATH, std::ios::binary);
     std::string response = read_rdb_file_binary(file);
     this->response_buf = "$" + std::to_string(response.size()) + "\r\n" + response;
-    this->response_ready = true;
-    this->communication_over();
+    // this->response_ready = true;
+    this->send_response();
 }
 
 
 // Parses a REPLCONF Command
-void RedisParser::parseREPLCONFCommand(const std::string& input, size_t& pos){
+void RedisParser::parseREPLCONFCommand(){
     this->response_buf = OK_RESPONSE;
-    response_ready = true;
-    this->communication_over();
+    // response_ready = true;
+    this->send_response();
     return;
 }
 
@@ -121,9 +127,9 @@ void RedisParser::parseINFOCommand(const std::string& input, size_t& pos){
         response = response + "repl_backlog_histlen:" + std::to_string(server_info.get_repl_backlog_histlen()) + "\r";
     }
     this->response_buf = create_string_reponse(response);
-    response_ready = true;
-    this->communication_over();
-    return;
+    // response_ready = true;
+    this->send_response();
+    return; 
 }
 
 // Parses a KEYS Command
@@ -147,15 +153,15 @@ void RedisParser::parseKEYSCommand(const std::string& input, size_t& pos){
         }
     }
     this->response_buf = create_array_reponse(response_array);
-    response_ready = true;
-    this->communication_over();
+    // response_ready = true;
+    this->send_response();
     return;
 }
 
 
 
 // Parses a CONFIG GET Command
-void RedisParser::parseCONFIGGETCommand(const std::string& input, size_t& pos, int num_elements){
+void RedisParser::parseCONFIGGETCommand(const std::string& input, size_t& pos){
     std::string command = parseBulkString(input, pos);
     for (auto& c : command) c = std::toupper(c);
     if (command == "GET"){
@@ -163,13 +169,13 @@ void RedisParser::parseCONFIGGETCommand(const std::string& input, size_t& pos, i
         if (config_variable == "dir"){
             this->response_buf = create_array_reponse({config_variable, config::dir});
             response_ready = true;
-            this->communication_over();
+            this->send_response();
             return;
         }
         else if (config_variable == "dbfile"){
             this->response_buf = create_array_reponse({config_variable, config::dbfilename});
             response_ready = true;
-            this->communication_over();
+            this->send_response();
             return;
         }
     }
@@ -178,22 +184,24 @@ void RedisParser::parseCONFIGGETCommand(const std::string& input, size_t& pos, i
     }
     this->response_buf = "";
     response_ready = true;
-    this->communication_over();
+    this->send_response();
     return;
 }
 
 // Parses a GET Command
 void RedisParser::parseGETCommand(const std::string& input, size_t& pos){
+    std::cout<< "IN GET COMMAND" << std::endl;
     std::string argument = parseBulkString(input, pos);
     std::string response = db_handler.get(argument);
     if (response != NULL_RESPONSE){
         this->response_buf = create_string_reponse(response);
         response_ready = true;
+        this->send_response();
         return;
     }
     this->response_buf = response;
     response_ready = true;
-    this->communication_over();
+    this->send_response();
     return;
 }
 
@@ -214,6 +222,7 @@ void RedisParser::parseSETCommand(const std::string& input, size_t& pos,
         auto current_time = get_current_time_milli();
         expiry_time = current_time + std::stoi(expiry_value);
     }
+    std::cout << "Setting Key: " << argument1 << " Value: " << argument2 << " Expiry Time: " << expiry_time << std::endl;
     db_handler.set(argument1, argument2, expiry_time);
     this->response_buf = OK_RESPONSE;
     response_ready = true;
@@ -227,7 +236,7 @@ void RedisParser::parseSETCommand(const std::string& input, size_t& pos,
         }
     }
     // Wait to finish communication, otherwise parser is deleted before the response is sent
-    this->communication_over();
+    this->send_response();
     return;
 }
 
@@ -239,16 +248,16 @@ void RedisParser::parseECHOCommand(const std::string& input, size_t& pos){
     // Formulate the RESP response for the ECHO command (bulk string format)
     this->response_buf = create_string_reponse(argument);
     response_ready = true;
-    this->communication_over();
+    this->send_response();
     return;
 }
 
 
 // Parses a PING Command
-void RedisParser::parsePINGCommand(const std::string& input, size_t& pos){
+void RedisParser::parsePINGCommand(){
     this->response_buf = PING_RESPONSE;
     response_ready = true;
-    this->communication_over();
+    this->send_response();
     return;
 }
 
@@ -256,17 +265,17 @@ void RedisParser::parsePINGCommand(const std::string& input, size_t& pos){
 //Helper Functions
 
 // Function to clear the reponse buffer
-void RedisParser::clear_response_buf(){
-    this->response_buf.clear();
-}
+// void RedisParser::clear_response_buf(){
+//     this->response_buf.clear();
+// }
 
-// Wait till the response is sent by the client Handler
-void RedisParser::wait_till_reponse_sent(){
-    while(!this->response_sent) {}
-    this->response_sent = false;
-}
+// // Wait till the response is sent by the client Handler
+// void RedisParser::wait_till_reponse_sent(){
+//     while(!this->response_sent) {}
+//     this->response_sent = false;
+// }
 
-void RedisParser::communication_over(){
-    this->wait_till_reponse_sent();
-    this->is_communicating = false;
-}
+// void RedisParser::communication_over(){
+//     this->wait_till_reponse_sent();
+//     this->is_communicating = false;
+// }

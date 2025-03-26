@@ -12,8 +12,8 @@
 
 class RedisRDBParser {
 private:
-    DatabaseHandler& db_handler;
     std::string filename;
+    DatabaseHandler& db_handler;
     bool readMetaData(std::ifstream& file);
     bool readDatabase(std::ifstream& file);
     bool readHeader(std::ifstream &file);

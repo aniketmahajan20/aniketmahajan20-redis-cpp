@@ -129,7 +129,7 @@ int ServerInfo::get_connected_slave_fd(int index){
     return connected_slaves_fd[index];
 }
 
-const int ServerInfo::get_master_fd(){
+int ServerInfo::get_master_fd(){
     return master_fd;
 }
 

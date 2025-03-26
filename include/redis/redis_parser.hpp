@@ -30,17 +30,18 @@ private:
     std::atomic<bool> response_ready;
     std::atomic<bool> response_sent;
     std::string response_buf;
+    int client_fd;
     // TODO: Add mutexes for all the flags
     // Parses a PSYNC Command
-    void parsePSYNCCommand(int client_fd, const std::string& input, size_t& pos);
+    void parsePSYNCCommand(int client_fd);
     // Parses a REPLCONF Command
-    void parseREPLCONFCommand(const std::string& input, size_t& pos);
+    void parseREPLCONFCommand();
     // Parses an INFO Command
     void parseINFOCommand(const std::string& input, size_t& pos);
     // Parses a KEYS Command
     void parseKEYSCommand(const std::string& input, size_t& pos);
     // Parses a CONFIG GET Command
-    void parseCONFIGGETCommand(const std::string& input, size_t& pos, int num_elements);
+    void parseCONFIGGETCommand(const std::string& input, size_t& pos);
     // Parses a GET Command
     void parseGETCommand(const std::string& input, size_t& pos);
     // Parses a SET command
@@ -49,7 +50,7 @@ private:
     // Parses an echo command
     void parseECHOCommand(const std::string& input, size_t& pos);
     // Parses an PING command
-    void parsePINGCommand(const std::string& input, size_t& pos);
+    void parsePINGCommand();
     // Parses a Redis command and returns the response
     void parseRESPCommand(int client_fd, const std::string& input);
     // declaring as friend function to access private members of this class
@@ -59,6 +60,7 @@ private:
     void wait_till_reponse_sent();
     void clear_response_buf();
     void communication_over();
+    void send_response();
 };
 
 #endif // REDISPARSER_HPP

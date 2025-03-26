@@ -15,10 +15,10 @@ void ClientHandler::client_handler(int client_fd){
         memset(rec_buf, 0, RECV_BUFFER_SIZE);
         // wait for the client to send data
         int bytesReceived = recv(client_fd, rec_buf, RECV_BUFFER_SIZE, 0);
-        if (bytesReceived == -1){
-            std::cerr << "Error in recv(). Quitting..." << std::endl;
-            break;
-        }
+        // if (bytesReceived == -1){
+        //     std::cerr << "Error in recv(). Quitting..." << std::endl;
+        //     break;
+        // }
         if (bytesReceived == 0){
             std::cout << "Client disconnected..." << std::endl;
             break;
@@ -40,6 +40,7 @@ void ClientHandler::response_handler(int client_fd, std::string recv_str){
     RedisParser* parser = new RedisParser(db_handler);
     parser->is_communicating = true;                                // Set the is_communicating to true
     std::string response;
+    parser->client_fd = client_fd;
     // Start the Parser Thread
     std::thread t = parser->parseRESPCommand_thread(client_fd, recv_str);
     // TODO: Add condition variables to stop the CPU load of looping and checking flags 

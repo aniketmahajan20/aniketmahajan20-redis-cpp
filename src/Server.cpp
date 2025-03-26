@@ -60,14 +60,15 @@ int main(int argc, char *argv[]) {
     std::cerr << "listen failed\n";
     return 1;
   }
-
-
+  
   ClientHandler *handler = new ClientHandler(db_handler);
-  server_info.send_handshake();
-  std::thread x = handler->client_handler_thread(server_info.get_master_fd());
-  std::cout << "Master connected:" << server_info.get_master_fd() << std::endl;
-  x.detach();
-
+  if (server_info.get_role() == "slave"){
+    std::thread x = handler->client_handler_thread(server_info.get_master_fd());
+    std::cout << "Master connected:" << server_info.get_master_fd() << std::endl;
+    x.detach();
+    server_info.send_handshake();
+  }
+  // std::this_thread::sleep_for(std::chrono::milliseconds(50));
   while (true){
     struct sockaddr_in client_addr;
     int client_addr_len = sizeof(client_addr);

@@ -68,7 +68,7 @@ std::string create_string_reponse(const std::string& response){
 // Create array response for the client
 std::string create_array_reponse(const std::vector<std::string>& response_arr){
     std::string response = "";
-    for (int i = 0; i < response_arr.size(); i++){
+    for (size_t i = 0; i < response_arr.size(); i++){
         response += create_string_reponse(response_arr[i]);
     }
     return "*" + std::to_string(response_arr.size()) + "\r\n" + response;

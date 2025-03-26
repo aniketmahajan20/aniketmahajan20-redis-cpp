@@ -35,7 +35,7 @@ public:
     void get_master_ip_port(const std::string& args);
     void add_connected_slave(int fd);
     int get_connected_slave_fd(int index);
-    const int get_master_fd();
+    int get_master_fd();
 private:
     std::string role;
     int connected_slaves;
