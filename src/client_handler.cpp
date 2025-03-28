@@ -71,7 +71,7 @@ void ClientHandler::worker_thread() {
     while (true) {
         std::function<void()> task;
         if (task_queue.dequeue(&task)) {
-            // task(); // Execute the task
+            task(); // Execute the taskß
         } else {
             continue; // No tasks, yield to avoid busy-waiting
         }

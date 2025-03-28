@@ -75,7 +75,7 @@ void RedisParser::parseRESPCommand(int client_fd, const std::string& input) {
     else {
         this->response_buf = "-ERR unknown command '" + command + "'";
         // response_ready = true;
-        this->send_response();
+        this->communication_over();
         return;
     }    
 }
@@ -90,14 +90,14 @@ void RedisParser::parsePSYNCCommand(int client_fd){
     }
     // Hardcoding the response as suggested by the requirements
     this->response_buf = "+FULLRESYNC " + server_info.get_master_replid() + " 0\r\n";
-    // this->response_ready = true;
-    this->send_response();
+    this->response_ready = true;
+    // this->send_response();
     // Send an empty file to the replica database
     std::ifstream file(RDB_FILE_PATH, std::ios::binary);
     std::string response = read_rdb_file_binary(file);
     this->response_buf = "$" + std::to_string(response.size()) + "\r\n" + response;
     // this->response_ready = true;
-    this->send_response();
+    this->communication_over();
 }
 
 
@@ -105,7 +105,7 @@ void RedisParser::parsePSYNCCommand(int client_fd){
 void RedisParser::parseREPLCONFCommand(){
     this->response_buf = OK_RESPONSE;
     // response_ready = true;
-    this->send_response();
+    this->communication_over();
     return;
 }
 
@@ -128,7 +128,7 @@ void RedisParser::parseINFOCommand(const std::string& input, size_t& pos){
     }
     this->response_buf = create_string_reponse(response);
     // response_ready = true;
-    this->send_response();
+    this->communication_over();
     return; 
 }
 
@@ -154,7 +154,7 @@ void RedisParser::parseKEYSCommand(const std::string& input, size_t& pos){
     }
     this->response_buf = create_array_reponse(response_array);
     // response_ready = true;
-    this->send_response();
+    this->communication_over();
     return;
 }
 
@@ -169,13 +169,13 @@ void RedisParser::parseCONFIGGETCommand(const std::string& input, size_t& pos){
         if (config_variable == "dir"){
             this->response_buf = create_array_reponse({config_variable, config::dir});
             response_ready = true;
-            this->send_response();
+            this->communication_over();
             return;
         }
         else if (config_variable == "dbfile"){
             this->response_buf = create_array_reponse({config_variable, config::dbfilename});
             response_ready = true;
-            this->send_response();
+            this->communication_over();
             return;
         }
     }
@@ -184,7 +184,7 @@ void RedisParser::parseCONFIGGETCommand(const std::string& input, size_t& pos){
     }
     this->response_buf = "";
     response_ready = true;
-    this->send_response();
+    this->communication_over();
     return;
 }
 
@@ -196,12 +196,12 @@ void RedisParser::parseGETCommand(const std::string& input, size_t& pos){
     if (response != NULL_RESPONSE){
         this->response_buf = create_string_reponse(response);
         response_ready = true;
-        this->send_response();
+        this->communication_over();
         return;
     }
     this->response_buf = response;
     response_ready = true;
-    this->send_response();
+    this->communication_over();
     return;
 }
 
@@ -236,7 +236,7 @@ void RedisParser::parseSETCommand(const std::string& input, size_t& pos,
         }
     }
     // Wait to finish communication, otherwise parser is deleted before the response is sent
-    this->send_response();
+    this->communication_over();
     return;
 }
 
@@ -248,7 +248,7 @@ void RedisParser::parseECHOCommand(const std::string& input, size_t& pos){
     // Formulate the RESP response for the ECHO command (bulk string format)
     this->response_buf = create_string_reponse(argument);
     response_ready = true;
-    this->send_response();
+    this->communication_over();
     return;
 }
 
@@ -257,7 +257,7 @@ void RedisParser::parseECHOCommand(const std::string& input, size_t& pos){
 void RedisParser::parsePINGCommand(){
     this->response_buf = PING_RESPONSE;
     response_ready = true;
-    this->send_response();
+    this->communication_over();
     return;
 }
 
@@ -265,17 +265,17 @@ void RedisParser::parsePINGCommand(){
 //Helper Functions
 
 // Function to clear the reponse buffer
-// void RedisParser::clear_response_buf(){
-//     this->response_buf.clear();
-// }
+void RedisParser::clear_response_buf(){
+    this->response_buf.clear();
+}
 
-// // Wait till the response is sent by the client Handler
-// void RedisParser::wait_till_reponse_sent(){
-//     while(!this->response_sent) {}
-//     this->response_sent = false;
-// }
+// Wait till the response is sent by the client Handler
+void RedisParser::wait_till_reponse_sent(){
+    while(!this->response_sent) {}
+    this->response_sent = false;
+}
 
-// void RedisParser::communication_over(){
-//     this->wait_till_reponse_sent();
-//     this->is_communicating = false;
-// }
+void RedisParser::communication_over(){
+    this->wait_till_reponse_sent();
+    this->is_communicating = false;
+}

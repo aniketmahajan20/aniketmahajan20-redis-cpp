@@ -22,6 +22,7 @@ public:
                                                is_replica(false) {
     for (int i = 0; i < THREAD_POOL_SIZE; i++) {
       workers.emplace_back(&ClientHandler::worker_thread, this);
+      std::cout << "running " << i << " workers" << std::endl;
     }             
   }
 
