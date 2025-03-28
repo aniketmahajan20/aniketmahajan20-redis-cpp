@@ -25,7 +25,7 @@ void ClientHandler::client_handler(int client_fd){
         }
         recv_str = std::string(rec_buf, 0, bytesReceived);
 
-        std::cout << "Received Bytes: " << recv_str << std::endl;
+        // std::cout << "Received Bytes: " << recv_str << std::endl;
         this->enqueueTask([this, client_fd, recv_str]() {
             response_handler(client_fd, recv_str);
         });
@@ -68,16 +68,29 @@ std::thread ClientHandler::client_handler_thread(int client_fd){
 
 
 void ClientHandler::worker_thread() {
+    int timer = 0;
     while (true) {
+        timer++;
         std::function<void()> task;
+        std::unique_lock<std::mutex> lock(mtx);
+        // Wait until there is a task
+        cv.wait(lock, [this] { return !task_queue.empty(); });
         if (task_queue.dequeue(&task)) {
+            std::cout << "A Task found. NOw executing it" << std::endl;
             task(); // Execute the taskß
         } else {
+            if (timer%1000 == 0){
+                std::cout << "I'm in worker thread and checked a 1000 times aready, but now task is found" << std::endl;
+            }
             continue; // No tasks, yield to avoid busy-waiting
         }
     }
 }
 
 void ClientHandler::enqueueTask(const std::function<void()>& task) {
-    task_queue.enqueue(task);
+    {
+        std::lock_guard<std::mutex> lock(mtx);
+        task_queue.enqueue(task);
+    }
+    this->cv.notify_one();
 }

@@ -34,6 +34,10 @@ public:
         }
     }
 
+    bool empty(){
+        return (head == tail);
+    }
+    
     // Enqueue: Add an item to the queue
     void enqueue(const T& value) {
         Node* newNode = new Node(value);

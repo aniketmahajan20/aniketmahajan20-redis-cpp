@@ -11,7 +11,7 @@
 #include "./redis_parser.hpp"
 #include "./non_blocking_queue.hpp"
 
-constexpr int THREAD_POOL_SIZE = 0;
+constexpr int THREAD_POOL_SIZE = 1;
 
 /*
 Summary: Client Handler Function
@@ -39,6 +39,8 @@ private:
   bool is_replica;
   std::vector<std::thread> workers;
   NonBlockingQueue<std::function<void()>> task_queue;
+  std::condition_variable cv;
+  std::mutex mtx;
   void worker_thread();
   void client_handler(int client_fd);
   void response_handler(int client_fd, std::string recv_str);
