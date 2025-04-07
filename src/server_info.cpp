@@ -118,6 +118,7 @@ void ServerInfo::send_handshake(){
         // Telling Master that replica has no data at all and request for Full Resync
         handshake_message = "*3\r\n$5\r\nPSYNC\r\n$1\r\n?\r\n$2\r\n-1\r\n";
         send(this->master_fd, handshake_message.c_str(), handshake_message.size(), 0);
+        // std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
 }
 

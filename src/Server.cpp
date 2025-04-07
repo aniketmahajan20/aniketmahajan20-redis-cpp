@@ -63,12 +63,13 @@ int main(int argc, char *argv[]) {
   
   ClientHandler *handler = new ClientHandler(db_handler);
   if (server_info.get_role() == "slave"){
+    server_info.send_handshake();
     std::thread x = handler->client_handler_thread(server_info.get_master_fd());
     std::cout << "Master connected:" << server_info.get_master_fd() << std::endl;
     x.detach();
-    server_info.send_handshake();
   }
   // std::this_thread::sleep_for(std::chrono::milliseconds(50));
+  int number_of_clients = 1;
   while (true){
     struct sockaddr_in client_addr;
     int client_addr_len = sizeof(client_addr);
@@ -78,7 +79,7 @@ int main(int argc, char *argv[]) {
       std::cerr<<"Error: Failed to accept client connection.\n";
       return 1;
     }
-    std::cout << "Client connected\n";
+    std::cout << "Client connected: " << number_of_clients++ << std::endl;
 
     std::thread t = handler->client_handler_thread(client_fd);
     t.detach();
