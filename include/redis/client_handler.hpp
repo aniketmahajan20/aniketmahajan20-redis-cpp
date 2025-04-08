@@ -38,7 +38,7 @@ private:
   DatabaseHandler& db_handler;
   bool is_replica;
   std::vector<std::thread> workers;
-  NonBlockingQueue<std::function<void()>> task_queue;
+  std::queue<std::function<void()>> task_queue;
   std::condition_variable cv;
   std::mutex mtx;
   void worker_thread();
