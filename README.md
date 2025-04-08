@@ -25,10 +25,10 @@ Use this command to check if the redis client cli has been installed: `redis-cli
 
 # Currently supported Mechanisms
 Currenlty this Redis Server Project Support the followinng functionalities of the original Redis:  
-1. Concurrency: Multiple client connections at the same time
-2. Persistence: Can startup the server and provide an rdb file. The server will setup itself with all the data provided in the RDB file. 
-3. Replication & Propagation: Multiple Slave Servers can be connected to the Master Server and any SET commands given to the Master Server will be propagated to the Slave servers automatically.  
-4. Handshake: Handshake mechanisms as defined in the RESP Protocol for master and slave servers has been implemented
+1. **Concurrency:** Multiple client connections at the same time
+2. **Persistence:** Can startup the server and provide an rdb file. The server will setup itself with all the data provided in the RDB file. 
+3. **Replication & Propagation:** Multiple Slave Servers can be connected to the Master Server and any SET commands given to the Master Server will be propagated to the Slave servers automatically.  
+4. **Handshake:** Handshake mechanisms as defined in the RESP Protocol for master and slave servers has been implemented
 > Note: While basic RDB files are supported, complex rdb files with complex data structures are not supported currently  
 > Note: The SET command is non-blocking for the Master Server, but the propagation to the slave servers is asynchronous and blocking.
 
